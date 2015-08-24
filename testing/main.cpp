@@ -159,25 +159,6 @@ void testLexerBinary() {
                 "And one member ok but not other");
   tanuki_expect(true, (constant("Hello") and regex("\\w+"))->match("Hello"),
                 "And Constant + Regexp True");
-
-  // Continuous
-  tanuki_expect(true,
-                (constant("Hello"), constant("Hello"))->match("HelloHello"),
-                "Continuous Constant true");
-  tanuki_expect(false,
-                (constant("Hello"), constant("world"))->match("helloworld"),
-                "Continuous Constant false");
-  tanuki_expect(true, (constant("Hello"), regex("\\w+"))->match("HelloWorld"),
-                "Continuous regex true");
-  tanuki_expect(true, (constant("Hello"), space(), regex("\\w+"), constant('!'))
-                          ->match("Hello World!"),
-                "Continuous regex hard true");
-  tanuki_expect(true, (constant("Hello"), +space(), regex("\\w+"),
-                       constant('!'))->match("Hello  World!"),
-                "Continuous regex harder true");
-  tanuki_expect(true, (constant("Hello"), *space(), regex("\\w+"),
-                       constant('!'), ~constant(";"))->match("HelloWorld!"),
-                "Continuous regex harder false");
 }
 
 void testGrammar() { testGrammarSimple(); }

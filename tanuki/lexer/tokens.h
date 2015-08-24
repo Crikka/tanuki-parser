@@ -41,8 +41,6 @@ template <typename, typename, typename>
 class OrToken;
 template <typename, typename, typename>
 class AndToken;
-template <typename, typename, typename>
-class ContinuousToken;
 
 // ~~~~~~~~ Helper
 
@@ -220,16 +218,6 @@ class AndToken : public BinaryToken<TLeft, TRight, TReturn> {
   ref<TReturn> match(const std::string &in) override;
 };
 
-/**
- * @brief The ContinuousToken class
- */
-template <typename THead, typename TTail,
-          typename TReturn = typename THead::TReturnValue>
-class ContinuousToken : public BinaryToken<THead, TTail, std::string> {
- public:
-  explicit ContinuousToken(ref<THead> head, ref<TTail> tail);
-  ref<std::string> match(const std::string &in) override;
-};
 
 // ------ Method --------
 
@@ -393,34 +381,6 @@ ref<TReturn> AndToken<TLeft, TRight, TReturn>::match(const std::string &in) {
   } else {
     return ref<TReturn>();
   }
-}
-
-template <typename THead, typename TTail, typename TReturn>
-ContinuousToken<THead, TTail, TReturn>::ContinuousToken(ref<THead> head,
-                                                        ref<TTail> tail)
-    : BinaryToken<THead, TTail, TReturn>(head, tail) {}
-
-template <typename THead, typename TTail, typename TReturn>
-ref<std::string> ContinuousToken<THead, TTail, TReturn>::match(
-    const std::string &in) {
-  bool res = false;
-
-  unsigned int length = in.size();
-  unsigned int size = 1;
-
-  while (!res && (size <= length)) {
-    std::string buffer = in.substr(0, size);
-
-    if (!BinaryToken<THead, TTail, TReturn>::left()->match(buffer).isNull()) {
-      res = !(BinaryToken<THead, TTail, TReturn>::right()
-                  ->match(in.substr(size))
-                  .isNull());
-    }
-
-    size++;
-  }
-
-  return (res ? ref<std::string>(new std::string(in)) : ref<std::string>());
 }
 }
 }
