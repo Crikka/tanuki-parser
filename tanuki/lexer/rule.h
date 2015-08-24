@@ -14,13 +14,14 @@ class Fragment;
 template <typename TResult, typename... TArgs>
 class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
  public:
-  ref<Fragment<TResult>> &execute(std::function<TResult*(TArgs...)> callback) {
+  ref<Fragment<TResult>>& execute(
+      std::function<ref<TResult>(TArgs...)> callback) {
     this->m_callbackByExpansion = callback;
 
     return m_context;
   }
-  ref<Fragment<TResult>> &execute(
-      std::function<TResult*(std::tuple<TArgs...>)> callback) {
+  ref<Fragment<TResult>>& execute(
+      std::function<ref<TResult>(std::tuple<TArgs...>)> callback) {
     this->m_callbackByTuple = callback;
 
     return m_context;
@@ -30,17 +31,17 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
   Rule() : std::function<ref<TResult>(std::string&)>() {}
 
   template <typename TRef, typename... TRestRef>
-  static Rule<TResult, typename TRef::TValue::TReturnValue,
-              typename TRestRef::TValue::TReturnValue...>*
+  static Rule<TResult, typename TRef::TDeepType,
+              typename TRestRef::TDeepType...>*
   create(tanuki::ref<Fragment<TResult>> context, TRef& ref, TRestRef&... rest) {
-    Rule<TResult, typename TRef::TValue::TReturnValue,
-         typename TRestRef::TValue::TReturnValue...>* rule =
-        new Rule<TResult, typename TRef::TValue::TReturnValue,
-                 typename TRestRef::TValue::TReturnValue...>();
+    Rule<TResult, typename TRef::TDeepType, typename TRestRef::TDeepType...>*
+        rule = new Rule<TResult, typename TRef::TDeepType,
+                        typename TRestRef::TDeepType...>();
 
     std::function<tanuki::ref<TResult>(std::string&)> buffer =
-        [=](std::string& in)
-            -> tanuki::ref<TResult> { return rule->resolve(in, ref, rest..., nullptr); };
+        [=](std::string& in) -> tanuki::ref<TResult> {
+          return rule->resolve(in, ref, rest..., nullptr);
+        };
 
     rule->swap(buffer);
     rule->m_context = context;
@@ -50,8 +51,9 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
 
   template <typename TRef, typename... TRestRef>
   struct IsRefCallback {
-    tanuki::ref<TResult> operator()(Rule<TResult, TArgs...>* rule, const std::string& in,
-                       TRef ref, TRestRef... rest) {
+    tanuki::ref<TResult> operator()(Rule<TResult, TArgs...>* rule,
+                                    const std::string& in, TRef ref,
+                                    TRestRef... rest) {
       int length = in.size();
       int maxSizeMatch;
       int start = 0;
@@ -87,9 +89,8 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
             };
 
             try {
-              return rule->resolve<TRestRef...>(
-                  in.substr(start + maxSizeMatch), rest...,
-                  useOnce(res.release()).exposeValue());
+              return rule->resolve<TRestRef...>(in.substr(start + maxSizeMatch),
+                                                rest..., res);
             } catch (NoExecuteDefinition&) {
               throw;
             }
@@ -103,12 +104,13 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
 
   template <typename TRef, typename... TRestRef>
   struct IsNullCallback {
-    tanuki::ref<TResult> operator()(Rule<TResult, TArgs...>* rule, const std::string& in,
-                       TRef ref, TRestRef... rest) {
+    tanuki::ref<TResult> operator()(Rule<TResult, TArgs...>* rule,
+                                    const std::string& in, TRef ref,
+                                    TRestRef... rest) {
       if (rule->m_callbackByExpansion) {
-        return tanuki::ref<TResult>(rule->m_callbackByExpansion(rest...));
+        return rule->m_callbackByExpansion(rest...);
       } else if (rule->m_callbackByTuple) {
-        return tanuki::ref<TResult>(rule->m_callbackByTuple(std::make_tuple(rest...)));
+        return rule->m_callbackByTuple(std::make_tuple(rest...));
       } else {
         throw NoExecuteDefinition();
       }
@@ -116,16 +118,17 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
   };
 
   template <typename TRef, typename... TRestRef>
-  tanuki::ref<TResult> resolve(const std::string& in, TRef ref, TRestRef... rest) {
-    typedef typename if_<std::is_same<TRef, std::nullptr_t>::value,
-                         IsNullCallback<TRef, TRestRef...>,
-                         IsRefCallback<TRef, TRestRef...>>::result Callback;
-
-    return Callback()(this, in, ref, rest...);
+  tanuki::ref<TResult> resolve(const std::string& in, TRef ref,
+                               TRestRef... rest) {
+    return
+        typename if_<std::is_same<TRef, std::nullptr_t>::value,
+                     IsNullCallback<TRef, TRestRef...>,
+                     IsRefCallback<TRef, TRestRef...>>::result()(this, in, ref,
+                                                                 rest...);
   }
 
-  std::function<TResult*(TArgs...)> m_callbackByExpansion;
-  std::function<TResult*(std::tuple<TArgs...>)> m_callbackByTuple;
+  std::function<ref<TResult>(TArgs...)> m_callbackByExpansion;
+  std::function<ref<TResult>(std::tuple<TArgs...>)> m_callbackByTuple;
   ref<Fragment<TResult>> m_context;
 };
 }

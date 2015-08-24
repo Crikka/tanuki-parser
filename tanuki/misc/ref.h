@@ -133,12 +133,27 @@ class ref {
  private:
   Intern *m_intern;
 
-  ref_friend_all_operator(int) ref_friend_all_operator(float)
-      ref_friend_all_operator(double) ref_friend_all_operator(long)
-          ref_friend_all_operator(long long)
+  ref_friend_all_operator(int);
+  ref_friend_all_operator(float);
+  ref_friend_all_operator(double);
+  ref_friend_all_operator(long);
+  ref_friend_all_operator(long long);
 };
 
-ref_implement_all_operator(int) ref_implement_all_operator(float)
-    ref_implement_all_operator(double) ref_implement_all_operator(long)
-        ref_implement_all_operator(long long)
+ref_implement_all_operator(int);
+ref_implement_all_operator(float);
+ref_implement_all_operator(double);
+ref_implement_all_operator(long);
+ref_implement_all_operator(long long);
+
+template <typename TOn>
+class undirect_ref : public ref<TOn> {
+ public:
+  typedef ref<typename TOn::TReturnType> TDeepType;
+
+ public:
+  undirect_ref() : ref<TOn>() {}
+
+  undirect_ref(TOn *on) : ref<TOn>(on) {}
+};
 }

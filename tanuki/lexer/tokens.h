@@ -45,23 +45,23 @@ class AndToken;
 // ~~~~~~~~ Helper
 
 // Method facility
-ref<ConstantToken> constant(char character);
-ref<ConstantToken> constant(const std::string &constant);
-ref<RegexToken> regex(const std::string &regex);
-ref<IntegerToken> integer();
+undirect_ref<ConstantToken> constant(char character);
+undirect_ref<ConstantToken> constant(const std::string &constant);
+undirect_ref<RegexToken> regex(const std::string &regex);
+undirect_ref<IntegerToken> integer();
 
 // Operator
 template <typename TLeft, typename TRight,
-          typename TReturn = typename TLeft::TReturnValue>
-ref<OrToken<TLeft, TRight, TReturn>> operator||(ref<TLeft> left,
+          typename TReturn = typename TLeft::TReturnType>
+undirect_ref<OrToken<TLeft, TRight, TReturn>> operator||(ref<TLeft> left,
                                                 ref<TRight> right);
-template <typename TToken, typename TReturn = typename TToken::TReturnValue>
-ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
+template <typename TToken, typename TReturn = typename TToken::TReturnType>
+undirect_ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
 
 // Helper constants
-ref<ConstantToken> &space();
-ref<ConstantToken> &tab();
-ref<OrToken<ConstantToken, ConstantToken, std::string>> &blank();
+undirect_ref<ConstantToken> &space();
+undirect_ref<ConstantToken> &tab();
+undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &blank();
 
 // Declaration
 
@@ -73,7 +73,7 @@ class Token {
  public:
   virtual ref<TReturn> match(const std::string &in) = 0;
 
-  typedef TReturn TReturnValue;
+  typedef TReturn TReturnType;
 };
 
 /**
@@ -120,7 +120,7 @@ class IntegerToken : public Token<int> {
 /**
  * @brief The UnaryToken class represents a token with a inner token.
  */
-template <typename TToken, typename TReturn = typename TToken::TReturnValue>
+template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class UnaryToken : public Token<TReturn> {
  public:
   explicit UnaryToken(ref<TToken> token);
@@ -136,7 +136,7 @@ class UnaryToken : public Token<TReturn> {
  * @brief The NotToken class represents a token returning false on not inner
  * token.
  */
-template <typename TToken, typename TReturn = typename TToken::TReturnValue>
+template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class NotToken : public UnaryToken<TToken, std::string> {
  public:
   explicit NotToken(ref<TToken> token);
@@ -147,7 +147,7 @@ class NotToken : public UnaryToken<TToken, std::string> {
  * @brief The PlusToken class represents a token repeting a true at least once
  * on not inner token.
  */
-template <typename TToken, typename TReturn = typename TToken::TReturnValue>
+template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class PlusToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
   explicit PlusToken(ref<TToken> token);
@@ -158,7 +158,7 @@ class PlusToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  * @brief The StarToken class represents a token repeting a true or optional on
  * not inner token.
  */
-template <typename TToken, typename TReturn = typename TToken::TReturnValue>
+template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class StarToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
   explicit StarToken(ref<TToken> token);
@@ -171,7 +171,7 @@ class StarToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
 /**
  * @brief The OptionalToken class
  */
-template <typename TToken, typename TReturn = typename TToken::TReturnValue>
+template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class OptionalToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
   explicit OptionalToken(ref<TToken> inner);
@@ -182,7 +182,7 @@ class OptionalToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  * @brief The BinaryToken class
  */
 template <typename TLeft, typename TRight,
-          typename TReturn = typename TLeft::TReturnValue>
+          typename TReturn = typename TLeft::TReturnType>
 class BinaryToken : public Token<TReturn> {
  public:
   explicit BinaryToken(ref<TLeft> left, ref<TRight> right);
@@ -200,7 +200,7 @@ class BinaryToken : public Token<TReturn> {
  * @brief The OrToken class
  */
 template <typename TLeft, typename TRight,
-          typename TReturn = typename TLeft::TReturnValuet>
+          typename TReturn = typename TLeft::TReturnTypet>
 class OrToken : public BinaryToken<TLeft, TRight, TReturn> {
  public:
   explicit OrToken(ref<TLeft> left, ref<TRight> right);
@@ -211,7 +211,7 @@ class OrToken : public BinaryToken<TLeft, TRight, TReturn> {
  * @brief The AndToken class
  */
 template <typename TLeft, typename TRight,
-          typename TReturn = typename TLeft::TReturnValue>
+          typename TReturn = typename TLeft::TReturnType>
 class AndToken : public BinaryToken<TLeft, TRight, TReturn> {
  public:
   explicit AndToken(ref<TLeft> left, ref<TRight> right);

@@ -14,7 +14,7 @@ class Rule;
 template <typename TResult>
 class Fragment {
  public:
-  typedef TResult TReturnValue;
+  typedef TResult TReturnType;
 
   ~Fragment() {
     for (std::function<tanuki::ref<TResult>(std::string&)>* rule : m_rules) {
@@ -23,14 +23,12 @@ class Fragment {
   }
 
   template <typename TRef, typename... TRestRef>
-  Rule<TResult, typename TRef::TValue::TReturnValue,
-       typename TRestRef::TValue::TReturnValue...>*
-  on(TRef ref, TRestRef... rest) {
-    Rule<TResult, typename TRef::TValue::TReturnValue,
-         typename TRestRef::TValue::TReturnValue...>* rule =
-        Rule<TResult, typename TRef::TValue::TReturnValue,
-             typename TRestRef::TValue::TReturnValue...>::create(this, ref,
-                                                                 rest...);
+  Rule<TResult, typename TRef::TDeepType, typename TRestRef::TDeepType...>* on(
+      TRef ref, TRestRef... rest) {
+    Rule<TResult, typename TRef::TDeepType, typename TRestRef::TDeepType...>*
+        rule =
+            Rule<TResult, typename TRef::TDeepType,
+                 typename TRestRef::TDeepType...>::create(this, ref, rest...);
     m_rules.push_back(rule);
 
     return rule;
@@ -83,5 +81,11 @@ class Fragment {
   std::vector<std::function<tanuki::ref<TResult>(std::string&)>*> m_rules;
   std::vector<std::function<bool(std::string&)>> m_ignored;
 };
+
+
+template<typename T>
+tanuki::undirect_ref<Fragment<T>> fragment() {
+  return tanuki::undirect_ref<Fragment<T>>(new Fragment<T>);
+}
 }
 }

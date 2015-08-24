@@ -7,10 +7,13 @@
   using tanuki::lexer::space;\
   using tanuki::lexer::tab;\
   using tanuki::lexer::blank;\
+  using tanuki::lexer::fragment;\
   \
   using tanuki::lexer::Fragment;\
   \
   using tanuki::ref;\
+  using tanuki::undirect_ref;\
+
 
 #include <iostream>
 

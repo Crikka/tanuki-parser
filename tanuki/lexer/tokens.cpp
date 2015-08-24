@@ -5,20 +5,20 @@
 
 namespace tanuki {
 namespace lexer {
-ref<ConstantToken> &space() {
-  static ref<ConstantToken> res = constant(' ');
+undirect_ref<ConstantToken> &space() {
+  static undirect_ref<ConstantToken> res = constant(' ');
 
   return res;
 }
 
-ref<ConstantToken> &tab() {
-  static ref<ConstantToken> res = constant('\t');
+undirect_ref<ConstantToken> &tab() {
+  static undirect_ref<ConstantToken> res = constant('\t');
 
   return res;
 }
 
-ref<OrToken<ConstantToken, ConstantToken, std::string>> &blank() {
-  static ref<OrToken<ConstantToken, ConstantToken, std::string>> res =
+undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &blank() {
+  static undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> res =
       (space() or tab());
 
   return res;
@@ -65,18 +65,18 @@ ref<int> IntegerToken::match(const std::string &in) {
 }
 
 // Helper
-ref<ConstantToken> constant(char character) {
-  return ref<ConstantToken>(new ConstantToken(character));
+undirect_ref<ConstantToken> constant(char character) {
+  return undirect_ref<ConstantToken>(new ConstantToken(character));
 }
 
-ref<ConstantToken> constant(const std::string &constant) {
-  return ref<ConstantToken>(new ConstantToken(constant));
+undirect_ref<ConstantToken> constant(const std::string &constant) {
+  return undirect_ref<ConstantToken>(new ConstantToken(constant));
 }
 
-ref<RegexToken> regex(const std::string &regex) {
-  return ref<RegexToken>(new RegexToken(regex));
+undirect_ref<RegexToken> regex(const std::string &regex) {
+  return undirect_ref<RegexToken>(new RegexToken(regex));
 }
 
-ref<IntegerToken> integer() { return ref<IntegerToken>(new IntegerToken()); }
+undirect_ref<IntegerToken> integer() { return undirect_ref<IntegerToken>(new IntegerToken()); }
 }
 }
