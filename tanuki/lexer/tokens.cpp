@@ -41,8 +41,6 @@ RegexToken::RegexToken(const std::string &regex)
 RegexToken::~RegexToken() { delete m_regex; }
 
 ref<std::string> RegexToken::match(const std::string &in) {
-  m_result.clear();
-
   if ((RE2::FullMatch(in, *m_regex, &m_result))) {
     return ref<std::string>(new std::string(m_result));
   } else {
@@ -55,8 +53,6 @@ IntegerToken::IntegerToken() : Token<int>(), m_regex(new re2::RE2("(\\d+)")) {}
 IntegerToken::~IntegerToken() { delete m_regex; }
 
 ref<int> IntegerToken::match(const std::string &in) {
-  m_result = 0;
-
   if ((RE2::FullMatch(in, *m_regex, &m_result))) {
     return ref<int>(new int(m_result));
   } else {

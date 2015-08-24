@@ -13,6 +13,7 @@ void testLexerBinary();
 
 void testGrammar();
 void testGrammarSimple();
+void testGrammarMultiple();
 
 int main(int argc, char* argv[]) {
   tanuki_run("Ref", testRef);
@@ -175,7 +176,10 @@ void testLexerBinary() {
                       "And Constant + Regexp True");
 }
 
-void testGrammar() { testGrammarSimple(); }
+void testGrammar() {
+  tanuki_run("Simple", testGrammarSimple);
+  tanuki_run("Multiple", testGrammarMultiple);
+}
 
 void testGrammarSimple() {
   use_tanuki;
@@ -210,7 +214,8 @@ void testGrammarSimple() {
   tanuki_expect(10, mainFragment->match("5 + 5"), "Simple add space");
   tanuki_expect(0, mainFragment->match("5  - 5"), "Simple less tab");
   tanuki_expect(25, mainFragment->match("5 * 5"), "Simple mult mix");
-  tanuki_expect(1, mainFragment->match("5      /5"), "Simple divide multispace");
+  tanuki_expect(1, mainFragment->match("5      /5"),
+                "Simple divide multispace");
 
   mainFragment->ignore(constant('#'), constant('(') or constant(')'));
 
@@ -219,15 +224,31 @@ void testGrammarSimple() {
   tanuki_expect(25, mainFragment->match("5 *# #5"), "Simple mult mix hard");
   tanuki_expect(1, mainFragment->match("5   ()##   /5"),
                 "Simple divide multispace hard");
+}
 
-  /*
-   * Work in progress
-   * ----------------
+void testGrammarMultiple() {
+  use_tanuki;
 
-  tanuki::ref<Fragment<int>> sub(new Fragment<int>());
+  undirect_ref<Fragment<std::string>> mainFragment = fragment<std::string>();
+  undirect_ref<Fragment<int>> sub = fragment<int>();
 
-  sub->on(constant("hello"))->execute([](std::string) { return new int(25); });
+  mainFragment->on(constant("hey"), space(), regex("\\w+"))
+      ->execute([](ref<std::string>, ref<std::string>, ref<std::string> word) {
+        return word;
+      })
+      ->on(sub, space(), regex("\\w+"))
+      ->execute([](ref<int> i, ref<std::string>, ref<std::string> word) {
+        return word;
+      })
+      ->on(regex("\\w+"))
+      ->execute([](ref<std::string> word) { return word; });
 
-  mainFragment->on(sub, integer())->execute([](int, int) { return 50; });
-  */
+  sub->on(constant("hello"))->execute([](ref<std::string>) { return 25_ref; });
+
+  tanuki_expect(25, sub->match("hello"), "Simple verification");
+  tanuki_expect("Everyone", mainFragment->match("Everyone"),
+                "Simple verification");
+  tanuki_expect("Everyone", mainFragment->match("hey Everyone"),
+                "Simple verification");
+  tanuki_expect("Everyone", mainFragment->match("hello Everyone"), "Simple");
 }

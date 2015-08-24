@@ -12,7 +12,7 @@ template <typename>
 class Fragment;
 
 template <typename TResult, typename... TArgs>
-class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
+class Rule : public std::function<tanuki::ref<TResult>(const std::string&)> {
  public:
   ref<Fragment<TResult>>& execute(
       std::function<ref<TResult>(TArgs...)> callback) {
@@ -27,9 +27,6 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
     return m_context;
   }
 
-  // private:
-  Rule() : std::function<ref<TResult>(std::string&)>() {}
-
   template <typename TRef, typename... TRestRef>
   static Rule<TResult, typename TRef::TDeepType,
               typename TRestRef::TDeepType...>*
@@ -38,8 +35,8 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
         rule = new Rule<TResult, typename TRef::TDeepType,
                         typename TRestRef::TDeepType...>();
 
-    std::function<tanuki::ref<TResult>(std::string&)> buffer =
-        [=](std::string& in) -> tanuki::ref<TResult> {
+    std::function<tanuki::ref<TResult>(const std::string&)> buffer =
+        [=](const std::string& in) -> tanuki::ref<TResult> {
           return rule->resolve(in, ref, rest..., nullptr);
         };
 
@@ -48,6 +45,9 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
 
     return rule;
   }
+
+ private:
+  Rule() : std::function<ref<TResult>(const std::string&)>() {}
 
   template <typename TRef, typename... TRestRef>
   struct IsRefCallback {
@@ -70,7 +70,7 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
 
           if (res) {
             auto keep = res;
-            maxSizeMatch = 1;
+            maxSizeMatch = i;
 
             // Greedy time
             i++;
@@ -89,8 +89,8 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
             };
 
             try {
-              return rule->resolve<TRestRef...>(in.substr(start + maxSizeMatch),
-                                                rest..., res);
+              return rule->resolve<TRestRef..., typename TRef::TDeepType>(
+                  in.substr(start + maxSizeMatch), rest..., res);
             } catch (NoExecuteDefinition&) {
               throw;
             }
@@ -107,12 +107,16 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
     tanuki::ref<TResult> operator()(Rule<TResult, TArgs...>* rule,
                                     const std::string& in, TRef ref,
                                     TRestRef... rest) {
-      if (rule->m_callbackByExpansion) {
-        return rule->m_callbackByExpansion(rest...);
-      } else if (rule->m_callbackByTuple) {
-        return rule->m_callbackByTuple(std::make_tuple(rest...));
-      } else {
-        throw NoExecuteDefinition();
+      if (in.empty()) {
+        if (rule->m_callbackByExpansion) {
+          return rule->m_callbackByExpansion(rest...);
+        } else if (rule->m_callbackByTuple) {
+          return rule->m_callbackByTuple(std::make_tuple(rest...));
+        } else {
+          throw NoExecuteDefinition();
+        }
+      } else {  // We don't parse all the input!
+        return tanuki::ref<TResult>();
       }
     }
   };

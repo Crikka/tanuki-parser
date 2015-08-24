@@ -1,6 +1,9 @@
 #pragma once
 
+#include <string>
+
 #include "exception.h"
+
 
 namespace tanuki {
 
@@ -156,4 +159,18 @@ class undirect_ref : public ref<TOn> {
 
   undirect_ref(TOn *on) : ref<TOn>(on) {}
 };
+
+
+
+ref<int> operator"" _ref(unsigned long long int in) {
+  return ref<int>(new int(in));
+}
+
+ref<std::string> operator"" _ref(const char* in) {
+  return ref<std::string>(new std::string(in));
+}
+
+ref<double> operator"" _ref(long double in) {
+  return ref<double>(new double(in));
+}
 }

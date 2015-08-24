@@ -13,6 +13,8 @@
   \
   using tanuki::ref;\
   using tanuki::undirect_ref;\
+  \
+  using tanuki::operator"" _ref;\
 
 
 #include <iostream>

@@ -17,7 +17,7 @@ class Fragment {
   typedef TResult TReturnType;
 
   ~Fragment() {
-    for (std::function<tanuki::ref<TResult>(std::string&)>* rule : m_rules) {
+    for (std::function<tanuki::ref<TResult>(const std::string&)>* rule : m_rules) {
       delete rule;
     }
   }
@@ -29,13 +29,14 @@ class Fragment {
         rule =
             Rule<TResult, typename TRef::TDeepType,
                  typename TRestRef::TDeepType...>::create(this, ref, rest...);
+
     m_rules.push_back(rule);
 
     return rule;
   }
 
-  tanuki::ref<TResult> match(std::string input) {
-    for (std::function<tanuki::ref<TResult>(std::string&)>* rule : m_rules) {
+  tanuki::ref<TResult> match(const std::string &input) {
+    for (std::function<tanuki::ref<TResult>(const std::string&)>* rule : m_rules) {
       try {
         tanuki::ref<TResult> result = (*rule)(input);
 
@@ -53,7 +54,7 @@ class Fragment {
   template <typename TToken, typename... TOther>
   void ignore(TToken token, TOther... other) {
     this->m_ignored.push_back(
-        [=](std::string& in) -> bool { return (token->match(in) == true); });
+        [=](const std::string& in) -> bool { return (token->match(in) == true); });
 
     ignore<TOther...>(other...);
   }
@@ -61,7 +62,7 @@ class Fragment {
   template <typename TToken>
   void ignore(TToken token) {
     this->m_ignored.push_back(
-        [=](std::string& in) -> bool { return (token->match(in) == true); });
+        [=](const std::string& in) -> bool { return (token->match(in) == true); });
   }
 
   bool shouldIgnore(std::string& in) {
@@ -78,8 +79,8 @@ class Fragment {
   }
 
  private:
-  std::vector<std::function<tanuki::ref<TResult>(std::string&)>*> m_rules;
-  std::vector<std::function<bool(std::string&)>> m_ignored;
+  std::vector<std::function<tanuki::ref<TResult>(const std::string&)>*> m_rules;
+  std::vector<std::function<bool(const std::string&)>> m_ignored;
 };
 
 
