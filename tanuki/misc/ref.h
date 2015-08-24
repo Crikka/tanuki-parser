@@ -4,7 +4,6 @@
 
 #include "exception.h"
 
-
 namespace tanuki {
 
 #define ref_friend_operator(type, op) \
@@ -22,7 +21,15 @@ namespace tanuki {
   friend ref<type> operator+(const ref<type> &, const ref<type> &); \
   friend ref<type> operator-(const ref<type> &, const ref<type> &); \
   friend ref<type> operator*(const ref<type> &, const ref<type> &); \
-  friend ref<type> operator/(const ref<type> &, const ref<type> &);
+  friend ref<type> operator/(const ref<type> &, const ref<type> &); \
+  friend ref<type> operator+(const ref<type> &, type);              \
+  friend ref<type> operator-(const ref<type> &, type);              \
+  friend ref<type> operator*(const ref<type> &, type);              \
+  friend ref<type> operator/(const ref<type> &, type);              \
+  friend ref<type> operator+(type, const ref<type> &);              \
+  friend ref<type> operator-(type, const ref<type> &);              \
+  friend ref<type> operator*(type, const ref<type> &);              \
+  friend ref<type> operator/(type, const ref<type> &);
 
 #define ref_implement_all_operator(type)                                   \
   ref<type> operator+(const ref<type> &in1, const ref<type> &in2) {        \
@@ -52,6 +59,62 @@ namespace tanuki {
     }                                                                      \
                                                                            \
     return ref<type>(new type(*(in1.m_intern->on) / *(in2.m_intern->on))); \
+  }                                                                        \
+  ref<type> operator+(const ref<type> &in1, type in2) {                    \
+    if (in1.isNull()) {                                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(*(in1.m_intern->on) + in2));                  \
+  }                                                                        \
+  ref<type> operator-(const ref<type> &in1, type in2) {                    \
+    if (in1.isNull()) {                                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(*(in1.m_intern->on) - in2));                 \
+  }                                                                        \
+  ref<type> operator*(const ref<type> &in1, type in2) {                     \
+    if (in1.isNull()) {                                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(*(in1.m_intern->on) * in2));                 \
+  }                                                                        \
+  ref<type> operator/(const ref<type> &in1, type in2) {                    \
+    if (in1.isNull()) {                                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(*(in1.m_intern->on) / in2));                 \
+  }                                                                        \
+  ref<type> operator+(type in1, const ref<type> &in2) {                    \
+    if (in2.isNull()) {                                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(in1 + *(in2.m_intern->on)));                 \
+  }                                                                        \
+  ref<type> operator-(type in1, const ref<type> &in2) {                    \
+    if (in2.isNull()) {                                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(in1 - *(in2.m_intern->on)));                 \
+  }                                                                        \
+  ref<type> operator*(type in1, const ref<type> &in2) {                    \
+    if (in2.isNull()) {                                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(in1 * *(in2.m_intern->on)));                 \
+  }                                                                        \
+  ref<type> operator/(type in1, const ref<type> &in2) {                    \
+    if (in2.isNull()) {                                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(in1 / *(in2.m_intern->on)));                 \
   }
 
 template <typename TOn>
@@ -96,9 +159,10 @@ class ref {
         }
 
         m_intern = other.m_intern;
-        if (m_intern != nullptr) {
-          m_intern->count++;
-        }
+      }
+
+      if (m_intern != nullptr) {
+        m_intern->count++;
       }
     }
 
@@ -160,13 +224,11 @@ class undirect_ref : public ref<TOn> {
   undirect_ref(TOn *on) : ref<TOn>(on) {}
 };
 
-
-
 ref<int> operator"" _ref(unsigned long long int in) {
   return ref<int>(new int(in));
 }
 
-ref<std::string> operator"" _ref(const char* in) {
+ref<std::string> operator"" _ref(const char *in) {
   return ref<std::string>(new std::string(in));
 }
 

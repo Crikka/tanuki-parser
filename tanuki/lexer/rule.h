@@ -80,13 +80,13 @@ class Rule : public std::function<tanuki::ref<TResult>(const std::string&)> {
               if (res) {
                 keep = res;
                 maxSizeMatch = i;
-              } else {
-                res = keep;
-                break;
               }
 
               i++;
             };
+
+            res = keep;
+
 
             try {
               return rule->resolve<TRestRef..., typename TRef::TDeepType>(

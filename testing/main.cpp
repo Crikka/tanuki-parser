@@ -15,6 +15,7 @@ void testGrammar();
 void testGrammarSimple();
 void testGrammarMultiple();
 void testGrammarFunny();
+void testGrammarWithOperator();
 
 int main(int argc, char* argv[]) {
   tanuki_run("Ref", testRef);
@@ -181,6 +182,7 @@ void testGrammar() {
   tanuki_run("Simple", testGrammarSimple);
   tanuki_run("Multiple", testGrammarMultiple);
   tanuki_run("Funny", testGrammarFunny);
+  tanuki_run("Grammer with operator", testGrammarWithOperator);
 }
 
 void testGrammarSimple() {
@@ -302,18 +304,37 @@ void testGrammarFunny() {
         return op->operator()(x, y);
       })
       ->on(constant("("), mainFragment, constant(")"))
-      ->execute([](ref<std::string>, ref<int> in, ref<std::string>) {
-        return in;
-      });
+      ->execute(
+          [](ref<std::string>, ref<int> in, ref<std::string>) { return in; });
 
   tanuki_expect(10, mainFragment->match("5+5"), "Add");
   tanuki_expect(0, mainFragment->match("5-5"), "Less");
   tanuki_expect(25, mainFragment->match("5*5"), "Mult");
   tanuki_expect(1, mainFragment->match("5/5"), "Divide");
   tanuki_expect(10, mainFragment->match("(5+5)"), "Add parenthesis");
-  tanuki_expect(10, mainFragment->match("((((5+5))))"), "Add lot of parenthesis");
+  tanuki_expect(10, mainFragment->match("((((5+5))))"),
+                "Add lot of parenthesis");
 
   mainFragment->ignore(blank());
 
-  tanuki_expect(10, mainFragment->match("((( ( 5 + 5 )) ) ) "), "Add lot of parenthesis with blank");
+  tanuki_expect(10, mainFragment->match("((( ( 5 + 5 )) ) ) "),
+                "Add lot of parenthesis with blank");
+}
+
+void testGrammarWithOperator() {
+  use_tanuki;
+
+  undirect_ref<Fragment<int>> mainFragment = fragment<int>();
+
+  mainFragment->on(integer(), constant("++"), constant(';'))
+      ->execute([](ref<int> i, ref<std::string>, ref<std::string>)
+                    -> ref<int> { return (i + 1); })
+      ->on(constant('{'), +mainFragment, constant('}'))
+      ->execute([](ref<std::string>, ref<std::vector<ref<int>>> in,
+                   ref<std::string>) -> ref<int> { return in->back(); });
+
+  tanuki_expect(6, mainFragment->match("5++;"), "Simple incr");
+  tanuki_expect(10, mainFragment->match("{5++;9++;}"), "Double incr");
+  tanuki_expect(25, mainFragment->match("{1++;2++;3++;4++;24++;}"),
+                "Lot of incr");
 }
