@@ -65,10 +65,10 @@ class Fragment {
         [=](const std::string& in) -> bool { return (token->match(in) == true); });
   }
 
-  bool shouldIgnore(std::string& in) {
+  bool shouldIgnore(const std::string& in) {
     bool res = false;
 
-    for (const std::function<bool(std::string&)>& ignored : m_ignored) {
+    for (const std::function<bool(const std::string&)>& ignored : m_ignored) {
       if (ignored(in)) {
         res = true;
         break;

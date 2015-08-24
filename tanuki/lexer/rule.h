@@ -107,7 +107,7 @@ class Rule : public std::function<tanuki::ref<TResult>(const std::string&)> {
     tanuki::ref<TResult> operator()(Rule<TResult, TArgs...>* rule,
                                     const std::string& in, TRef ref,
                                     TRestRef... rest) {
-      if (in.empty()) {
+      if (in.empty() || rule->m_context->shouldIgnore(in)) {
         if (rule->m_callbackByExpansion) {
           return rule->m_callbackByExpansion(rest...);
         } else if (rule->m_callbackByTuple) {
@@ -115,7 +115,7 @@ class Rule : public std::function<tanuki::ref<TResult>(const std::string&)> {
         } else {
           throw NoExecuteDefinition();
         }
-      } else {  // We don't parse all the input!
+      } else { // We don't parse all the
         return tanuki::ref<TResult>();
       }
     }
