@@ -14,6 +14,7 @@ set(SOURCES
 
     # Lexer
     tanuki/lexer/lexer.h
+    tanuki/lexer/operation.h
     tanuki/lexer/tokens
     tanuki/lexer/fragment.h
     tanuki/lexer/rule.h
