@@ -66,7 +66,7 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
         } else {
           auto res = ref->match(buffer);
 
-          if (res == true) {
+          if (res) {
             auto keep = res;
             maxSizeMatch = 1;
 
@@ -75,7 +75,7 @@ class Rule : public std::function<tanuki::ref<TResult>(std::string&)> {
             while (i <= length) {
               buffer = (in.substr(start, i));
               res = ref->match(buffer);
-              if (res == true) {
+              if (res) {
                 keep = res;
                 maxSizeMatch = i;
               } else {

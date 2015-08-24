@@ -1,6 +1,56 @@
 #pragma once
 
+#include "exception.h"
+
 namespace tanuki {
+
+#define ref_friend_operator(type, op) \
+  friend ref<type> operator op(const ref<type> &, const ref<type> &)
+#define ref_implement_operator(type, op)                                    \
+  ref<type> operator op(const ref<type> &in1, const ref<type> &in2) {       \
+    if (in1.isNull() or in2.isNull()) {                                     \
+      throw NullReferenceError();                                           \
+    }                                                                       \
+                                                                            \
+    return ref<type>(new type(*(in1.m_intern->on)op * (in2.m_intern->on))); \
+  }
+
+#define ref_friend_all_operator(type)                               \
+  friend ref<type> operator+(const ref<type> &, const ref<type> &); \
+  friend ref<type> operator-(const ref<type> &, const ref<type> &); \
+  friend ref<type> operator*(const ref<type> &, const ref<type> &); \
+  friend ref<type> operator/(const ref<type> &, const ref<type> &);
+
+#define ref_implement_all_operator(type)                                   \
+  ref<type> operator+(const ref<type> &in1, const ref<type> &in2) {        \
+    if (in1.isNull() or in2.isNull()) {                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(*(in1.m_intern->on) + *(in2.m_intern->on))); \
+  }                                                                        \
+  ref<type> operator-(const ref<type> &in1, const ref<type> &in2) {        \
+    if (in1.isNull() or in2.isNull()) {                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(*(in1.m_intern->on) - *(in2.m_intern->on))); \
+  }                                                                        \
+  ref<type> operator*(const ref<type> &in1, const ref<type> &in2) {        \
+    if (in1.isNull() or in2.isNull()) {                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(*(in1.m_intern->on) * *(in2.m_intern->on))); \
+  }                                                                        \
+  ref<type> operator/(const ref<type> &in1, const ref<type> &in2) {        \
+    if (in1.isNull() or in2.isNull()) {                                    \
+      throw NullReferenceError();                                          \
+    }                                                                      \
+                                                                           \
+    return ref<type>(new type(*(in1.m_intern->on) / *(in2.m_intern->on))); \
+  }
+
 template <typename TOn>
 class ref {
  public:
@@ -71,44 +121,24 @@ class ref {
     return res;
   }
 
+  operator bool() const { return (!isNull()); }
+  bool operator==(TOn other) {
+    if (isNull()) {
+      return false;
+    }
+
+    return (*(m_intern->on) == other);
+  }
+
  private:
   Intern *m_intern;
 
-  template <typename T>
-  friend bool operator==(bool, const ref<T> &ref);
-  template <typename T>
-  friend bool operator==(const ref<T> &ref, bool);
-  template <typename T>
-  friend bool operator==(T, const ref<T> &ref);
-  template <typename T>
-  friend bool operator==(const ref<T> &ref, T);
+  ref_friend_all_operator(int) ref_friend_all_operator(float)
+      ref_friend_all_operator(double) ref_friend_all_operator(long)
+          ref_friend_all_operator(long long)
 };
 
-template <typename TOn>
-bool operator==(bool member1, const ref<TOn> &ref) {
-  return (member1 != ref.isNull());
-}
-
-template <typename TOn>
-bool operator==(const ref<TOn> &ref, bool member2) {
-  return (ref.isNull() != member2);
-}
-
-template <typename TOn>
-bool operator==(TOn member1, const ref<TOn> &ref) {
-  if (ref.isNull()) {
-    return false;
-  }
-
-  return (member1 == *(ref.m_intern->on));
-}
-
-template <typename TOn>
-bool operator==(const ref<TOn> &ref, TOn member2) {
-  if (ref.isNull()) {
-    return false;
-  }
-
-  return (*(ref.m_intern->on) == member2);
-}
+ref_implement_all_operator(int) ref_implement_all_operator(float)
+    ref_implement_all_operator(double) ref_implement_all_operator(long)
+        ref_implement_all_operator(long long)
 }

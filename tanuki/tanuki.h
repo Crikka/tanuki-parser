@@ -9,6 +9,8 @@
   using tanuki::lexer::blank;\
   \
   using tanuki::lexer::Fragment;\
+  \
+  using tanuki::ref;\
 
 #include <iostream>
 
