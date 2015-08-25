@@ -24,6 +24,13 @@ undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &blank() {
   return res;
 }
 
+undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &lineTerminator() {
+  static undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> res =
+      (constant('\r') or constant('\n'));
+
+  return res;
+}
+
 ConstantToken::ConstantToken(const std::string &constant)
     : Token<std::string>(), m_constant(constant) {}
 

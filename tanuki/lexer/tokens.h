@@ -62,6 +62,7 @@ undirect_ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
 undirect_ref<ConstantToken> &space();
 undirect_ref<ConstantToken> &tab();
 undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &blank();
+undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &lineTerminator();
 
 // Declaration
 

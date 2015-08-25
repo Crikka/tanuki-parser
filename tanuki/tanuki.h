@@ -7,6 +7,7 @@
   using tanuki::lexer::space;\
   using tanuki::lexer::tab;\
   using tanuki::lexer::blank;\
+  using tanuki::lexer::lineTerminator;\
   using tanuki::lexer::fragment;\
   \
   using tanuki::lexer::Fragment;\

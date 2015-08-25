@@ -19,20 +19,6 @@ void testGrammarMultiple();
 void testGrammarFunny();
 void testGrammarWithOperator();
 
-template<typename TIn, typename... TOut>
-void foo(TIn, TOut...);
-void foo();
-
-template<typename TIn, typename... TOut>
-void foo(TIn in, TOut... out) {
-  std::cout << in << std::endl;
-  foo(out...);
-}
-
-void foo() {
-  std::cout << "End" << std::endl;
-}
-
 int main(int argc, char* argv[]) {
   tanuki_run("Ref", testRef);
   tanuki_run("Lexer", testLexer);
@@ -72,6 +58,11 @@ void testLexerConstant() {
   tanuki_match_expect(true, blank()->match("\t"), "Blank tab True");
   tanuki_match_expect(false, blank()->match("b"), "Blank False");
   tanuki_match_expect(false, blank()->match("\t "), "Blank Long False");
+
+  // Line terminator
+  tanuki_match_expect(true, lineTerminator()->match("\r"), "LineTerminator MacOS Style True");
+  tanuki_match_expect(true, lineTerminator()->match("\n"), "LineTerminator Linux Style  True");
+  tanuki_match_expect(false, blank()->match("n"), "LineTerminator False");
 }
 
 void testLexerSimple() {
