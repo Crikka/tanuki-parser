@@ -4,6 +4,8 @@
 
 #include "framework.h"
 
+#include <tuple>
+
 void testRef();
 void testLexer();
 void testLexerConstant();
@@ -16,6 +18,20 @@ void testGrammarSimple();
 void testGrammarMultiple();
 void testGrammarFunny();
 void testGrammarWithOperator();
+
+template<typename TIn, typename... TOut>
+void foo(TIn, TOut...);
+void foo();
+
+template<typename TIn, typename... TOut>
+void foo(TIn in, TOut... out) {
+  std::cout << in << std::endl;
+  foo(out...);
+}
+
+void foo() {
+  std::cout << "End" << std::endl;
+}
 
 int main(int argc, char* argv[]) {
   tanuki_run("Ref", testRef);
