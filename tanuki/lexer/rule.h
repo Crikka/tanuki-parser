@@ -21,7 +21,9 @@ template <typename TResult, typename... TRefs>
 class Rule : public Matchable<TResult> {
  public:
   Rule(tanuki::ref<Fragment<TResult>> context, TRefs... refs)
-      : Matchable<TResult>(), m_context(context), m_refs(this, std::string(), refs...) {}
+      : Matchable<TResult>(),
+        m_context(context),
+        m_refs(this, std::string(), refs...) {}
 
   ref<Fragment<TResult>>& execute(
       std::function<ref<TResult>(typename TRefs::TDeepType...)> callback) {
@@ -63,23 +65,30 @@ class Rule : public Matchable<TResult> {
           auto res = ref->match(buffer);
 
           if (res) {
-            auto keep = res;
+            bool greedy = ref->greedy();
             maxSizeMatch = i;
 
-            // Greedy time
-            i++;
-            while (i <= length) {
-              buffer = (in.substr(start, i));
-              res = ref->match(buffer);
-              if (res) {
-                keep = res;
-                maxSizeMatch = i;
-              }
+            if (greedy) {
+              auto keep = res;
+              bool stopAtFirstGreedyFail = ref->stopAtFirstGreedyFail();
 
+              // Greedy time
               i++;
-            };
+              while (i <= length) {
+                buffer = (in.substr(start, i));
+                res = ref->match(buffer);
+                if (res) {
+                  keep = res;
+                  maxSizeMatch = i;
+                } else if (stopAtFirstGreedyFail) {
+                  break;
+                }
 
-            res = keep;
+                i++;
+              };
+
+              res = keep;
+            }
 
             try {
               return rule->resolve<TRestRef..., typename TRef::TDeepType>(
@@ -114,8 +123,9 @@ class Rule : public Matchable<TResult> {
     }
   };
 
-
-  static tanuki::ref<TResult> static_resolve(Rule<TResult, TRefs...> *rule, const std::string& in, TRefs... refs) {
+  static tanuki::ref<TResult> static_resolve(Rule<TResult, TRefs...>* rule,
+                                             const std::string& in,
+                                             TRefs... refs) {
     return rule->resolve(in, refs..., nullptr);
   }
 

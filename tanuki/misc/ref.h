@@ -65,7 +65,7 @@ namespace tanuki {
       throw NullReferenceError();                                          \
     }                                                                      \
                                                                            \
-    return ref<type>(new type(*(in1.m_intern->on) + in2));                  \
+    return ref<type>(new type(*(in1.m_intern->on) + in2));                 \
   }                                                                        \
   ref<type> operator-(const ref<type> &in1, type in2) {                    \
     if (in1.isNull()) {                                                    \
@@ -74,7 +74,7 @@ namespace tanuki {
                                                                            \
     return ref<type>(new type(*(in1.m_intern->on) - in2));                 \
   }                                                                        \
-  ref<type> operator*(const ref<type> &in1, type in2) {                     \
+  ref<type> operator*(const ref<type> &in1, type in2) {                    \
     if (in1.isNull()) {                                                    \
       throw NullReferenceError();                                          \
     }                                                                      \
@@ -197,6 +197,9 @@ class ref {
     return (*(m_intern->on) == other);
   }
 
+ protected:
+  TOn *expose() { return (m_intern->on); }
+
  private:
   Intern *m_intern;
 
@@ -217,6 +220,20 @@ template <typename TOn>
 class undirect_ref : public ref<TOn> {
  public:
   typedef ref<typename TOn::TReturnType> TDeepType;
+  bool greedy() {
+    if (this->isNull()) {
+      return false;
+    } else {
+      return this->expose()->greedy();
+    }
+  }
+  bool stopAtFirstGreedyFail() {
+    if (this->isNull()) {
+      return false;
+    } else {
+      return this->expose()->stopAtFirstGreedyFail();
+    }
+  }
 
  public:
   undirect_ref() : ref<TOn>() {}

@@ -19,6 +19,9 @@ class Fragment {
  public:
   typedef TResult TReturnType;
 
+  virtual bool greedy() { return true; }
+  virtual bool stopAtFirstGreedyFail() { return true; }
+
   ~Fragment() {
     for (Matchable<TResult>* rule : m_rules) {
       delete rule;

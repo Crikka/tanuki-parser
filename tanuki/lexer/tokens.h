@@ -72,6 +72,8 @@ template <typename TReturn>
 class Token {
  public:
   virtual ref<TReturn> match(const std::string &in) = 0;
+  virtual bool greedy() { return true; }
+  virtual bool stopAtFirstGreedyFail() { return true; }
 
   typedef TReturn TReturnType;
 };
@@ -84,6 +86,7 @@ class ConstantToken : public Token<std::string> {
   explicit ConstantToken(const std::string &constant);
   explicit ConstantToken(char constant);
   ref<std::string> match(const std::string &in) override;
+  bool greedy() override { return false; }
 
  private:
   std::string m_constant;
@@ -97,6 +100,7 @@ class RegexToken : public Token<std::string> {
   explicit RegexToken(const std::string &regex);
   virtual ~RegexToken();
   ref<std::string> match(const std::string &in) override;
+  bool stopAtFirstGreedyFail() override { return false; }
 
  private:
   re2::RE2 *m_regex;
@@ -152,6 +156,7 @@ class PlusToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
   explicit PlusToken(ref<TToken> token);
   ref<std::vector<ref<TReturn>>> match(const std::string &in) override;
+  bool stopAtFirstGreedyFail() override { return false; }
 };
 
 /**
@@ -163,6 +168,7 @@ class StarToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
   explicit StarToken(ref<TToken> token);
   ref<std::vector<ref<TReturn>>> match(const std::string &in) override;
+  bool stopAtFirstGreedyFail() override { return false; }
 
  private:
   ref<PlusToken<TToken, TReturn>> m_inner;
