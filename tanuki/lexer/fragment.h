@@ -21,6 +21,8 @@ class Fragment {
 
   virtual bool greedy() { return true; }
   virtual bool stopAtFirstGreedyFail() { return true; }
+  int exactSize() { return -1; }
+  int biggestSize() { return -1; }
 
   ~Fragment() {
     for (Matchable<TResult>* rule : m_rules) {

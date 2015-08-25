@@ -4,6 +4,7 @@
   using tanuki::lexer::constant;\
   using tanuki::lexer::regex;\
   using tanuki::lexer::integer;\
+  using tanuki::lexer::endWith;\
   using tanuki::lexer::space;\
   using tanuki::lexer::tab;\
   using tanuki::lexer::blank;\

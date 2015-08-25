@@ -154,6 +154,18 @@ void testLexerUnary() {
                       "Star Constant True");
   tanuki_match_expect(true, (*constant("Hello"))->match("Hellohello"),
                       "Star Constant False");
+
+  // EndWith
+  tanuki_match_expect(true, endWith(constant("Hello"))->match("HelloHello"),
+                      "EndWith Constant True");
+  tanuki_match_expect(false, endWith(constant("Hello"))->match("HelloHella"),
+                      "EndWith Constant False");
+  tanuki_match_expect(true, endWith(constant("Hello"))->match("Hello"),
+                      "EndWith exact size true");
+  tanuki_match_expect(false, endWith(constant("Hello"))->match("Hella"),
+                      "EndWith exact size False");
+  tanuki_match_expect(false, endWith(constant("Hello"))->match("Hell"),
+                      "EndWith lower size true");
 }
 
 void testLexerBinary() {

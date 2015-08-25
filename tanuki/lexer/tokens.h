@@ -33,6 +33,8 @@ template <typename, typename>
 class StarToken;
 template <typename, typename>
 class OptionalToken;
+template <typename, typename>
+class EndWithToken;
 
 // Binary
 template <typename, typename, typename>
@@ -51,10 +53,14 @@ undirect_ref<RegexToken> regex(const std::string &regex);
 undirect_ref<IntegerToken> integer();
 
 // Operator
+template <typename TToken>
+undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>> endWith(
+    undirect_ref<TToken> inner);
+
 template <typename TLeft, typename TRight,
           typename TReturn = typename TLeft::TReturnType>
 undirect_ref<OrToken<TLeft, TRight, TReturn>> operator||(ref<TLeft> left,
-                                                ref<TRight> right);
+                                                         ref<TRight> right);
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
 undirect_ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
 
@@ -62,7 +68,8 @@ undirect_ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
 undirect_ref<ConstantToken> &space();
 undirect_ref<ConstantToken> &tab();
 undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &blank();
-undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &lineTerminator();
+undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &
+lineTerminator();
 
 // Declaration
 
@@ -75,6 +82,8 @@ class Token {
   virtual ref<TReturn> match(const std::string &in) = 0;
   virtual bool greedy() { return true; }
   virtual bool stopAtFirstGreedyFail() { return true; }
+  virtual int exactSize() { return -1; }
+  virtual int biggestSize() { return -1; }
 
   typedef TReturn TReturnType;
 };
@@ -88,6 +97,7 @@ class ConstantToken : public Token<std::string> {
   explicit ConstantToken(char constant);
   ref<std::string> match(const std::string &in) override;
   bool greedy() override { return false; }
+  int exactSize() override { return m_constant.size(); }
 
  private:
   std::string m_constant;
@@ -128,13 +138,13 @@ class IntegerToken : public Token<int> {
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class UnaryToken : public Token<TReturn> {
  public:
-  explicit UnaryToken(ref<TToken> token);
+  explicit UnaryToken(undirect_ref<TToken> token);
 
  protected:
-  ref<TToken> token() { return m_token; }
+  undirect_ref<TToken> token() { return m_token; }
 
  private:
-  ref<TToken> m_token;
+  undirect_ref<TToken> m_token;
 };
 
 /**
@@ -144,7 +154,7 @@ class UnaryToken : public Token<TReturn> {
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class NotToken : public UnaryToken<TToken, std::string> {
  public:
-  explicit NotToken(ref<TToken> token);
+  explicit NotToken(undirect_ref<TToken> token);
   ref<std::string> match(const std::string &in) override;
 };
 
@@ -155,7 +165,7 @@ class NotToken : public UnaryToken<TToken, std::string> {
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class PlusToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
-  explicit PlusToken(ref<TToken> token);
+  explicit PlusToken(undirect_ref<TToken> token);
   ref<std::vector<ref<TReturn>>> match(const std::string &in) override;
   bool stopAtFirstGreedyFail() override { return false; }
 };
@@ -167,7 +177,7 @@ class PlusToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class StarToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
-  explicit StarToken(ref<TToken> token);
+  explicit StarToken(undirect_ref<TToken> token);
   ref<std::vector<ref<TReturn>>> match(const std::string &in) override;
   bool stopAtFirstGreedyFail() override { return false; }
 
@@ -181,8 +191,18 @@ class StarToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class OptionalToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
-  explicit OptionalToken(ref<TToken> inner);
+  explicit OptionalToken(undirect_ref<TToken> inner);
   ref<std::vector<ref<TReturn>>> match(const std::string &in) override;
+};
+
+/**
+ * @brief The EndWith class
+ */
+template <typename TToken, typename TReturn = typename TToken::TReturnType>
+class EndWithToken : public UnaryToken<TToken, TReturn> {
+ public:
+  explicit EndWithToken(undirect_ref<TToken> inner);
+  ref<TReturn> match(const std::string &in) override;
 };
 
 /**
@@ -225,29 +245,28 @@ class AndToken : public BinaryToken<TLeft, TRight, TReturn> {
   ref<TReturn> match(const std::string &in) override;
 };
 
-
 // ------ Method --------
 
 // Unary
 template <typename TToken, typename TReturn>
-UnaryToken<TToken, TReturn>::UnaryToken(ref<TToken> token)
+UnaryToken<TToken, TReturn>::UnaryToken(undirect_ref<TToken> token)
     : Token<TReturn>(), m_token(token) {}
 
 template <typename TToken, typename TReturn>
-NotToken<TToken, TReturn>::NotToken(ref<TToken> token)
+NotToken<TToken, TReturn>::NotToken(undirect_ref<TToken> token)
     : UnaryToken<TToken, TReturn>(token) {}
 
 template <typename TToken, typename TReturn>
 ref<std::string> NotToken<TToken, TReturn>::match(const std::string &in) {
-  if (UnaryToken<TToken, TReturn>::token()->match(in).isNull()) {
-    return ref<std::string>(new std::string(in));
-  } else {
+  if (UnaryToken<TToken, TReturn>::token()->match(in)) {
     return ref<std::string>();
+  } else {
+    return ref<std::string>(new std::string(in));
   }
 }
 
 template <typename TToken, typename TReturn>
-PlusToken<TToken, TReturn>::PlusToken(ref<TToken> token)
+PlusToken<TToken, TReturn>::PlusToken(undirect_ref<TToken> token)
     : UnaryToken<TToken, std::vector<ref<TReturn>>>(token) {}
 
 template <typename TToken, typename TReturn>
@@ -312,34 +331,95 @@ ref<std::vector<ref<TReturn>>> PlusToken<TToken, TReturn>::match(
 }
 
 template <typename TToken, typename TReturn>
-StarToken<TToken, TReturn>::StarToken(ref<TToken> token)
-    : UnaryToken<TToken, std::vector<ref<TReturn>>>(token), m_inner(+ token) {}
+StarToken<TToken, TReturn>::StarToken(undirect_ref<TToken> token)
+    : UnaryToken<TToken, std::vector<ref<TReturn>>>(token), m_inner(+token) {}
 
 template <typename TToken, typename TReturn>
-ref<std::vector<ref<TReturn>>> StarToken<TToken, TReturn>::match(const std::string &in) {
+ref<std::vector<ref<TReturn>>> StarToken<TToken, TReturn>::match(
+    const std::string &in) {
   ref<std::vector<ref<TReturn>>> result = (m_inner->match(in));
 
   if (result.isNull()) {
-      return  ref<std::vector<ref<TReturn>>>(new std::vector<ref<TReturn>>());
-  }
-  else {
-      return result;
+    return ref<std::vector<ref<TReturn>>>(new std::vector<ref<TReturn>>());
+  } else {
+    return result;
   }
 }
 
 template <typename TToken, typename TReturn>
-OptionalToken<TToken, TReturn>::OptionalToken(ref<TToken> token)
+OptionalToken<TToken, TReturn>::OptionalToken(undirect_ref<TToken> token)
     : UnaryToken<TToken, std::vector<ref<TReturn>>>(token) {}
 
 template <typename TToken, typename TReturn>
-ref<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::match(const std::string &in) {
+ref<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::match(
+    const std::string &in) {
   ref<TReturn> result =
       (UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->match(in));
 
   if (result.isNull()) {
     return ref<std::vector<ref<TReturn>>>(new std::vector<ref<TReturn>>());
   } else {
-      return ref<std::vector<ref<TReturn>>>(new std::vector<ref<TReturn>>({result}));
+    return ref<std::vector<ref<TReturn>>>(
+        new std::vector<ref<TReturn>>({result}));
+  }
+}
+
+template <typename TToken, typename TReturn>
+EndWithToken<TToken, TReturn>::EndWithToken(undirect_ref<TToken> token)
+    : UnaryToken<TToken, TReturn>(token) {}
+
+template <typename TToken, typename TReturn>
+ref<TReturn> EndWithToken<TToken, TReturn>::match(const std::string &in) {
+  if (in.empty()) {
+    return ref<TReturn>();
+  }
+
+  int exactSize = UnaryToken<TToken, TReturn>::token().exactSize();
+  int length = in.size();
+  ref<TReturn> result;
+
+  if (exactSize == -1) {
+    int biggestSize = UnaryToken<TToken, TReturn>::token().biggestSize();
+    int minimum;
+
+    if (biggestSize == -1) {
+      minimum = 0;
+    } else {
+      minimum = (length - biggestSize);
+
+      if (minimum < 0) {
+        minimum = 0;
+      }
+    }
+
+    do {
+      length--;
+      std::string buffer = in.substr(length);
+
+      result = UnaryToken<TToken, TReturn>::token()->match(buffer);
+
+      if (result) {
+        break;
+      }
+
+    } while (length > minimum);
+
+    return result;
+  } else {
+    int delta = (in.size() - exactSize);
+
+    if (delta < 0) {
+      return ref<TReturn>();
+    } else {
+      ref<TReturn> result =
+          (UnaryToken<TToken, TReturn>::token()->match(in.substr(delta)));
+
+      if (result) {
+        return result;
+      } else {
+        return ref<TReturn>();
+      }
+    }
   }
 }
 
@@ -388,6 +468,13 @@ ref<TReturn> AndToken<TLeft, TRight, TReturn>::match(const std::string &in) {
   } else {
     return ref<TReturn>();
   }
+}
+
+template <typename TToken>
+undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>> endWith(
+    undirect_ref<TToken> inner) {
+  return undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>>(
+      new EndWithToken<TToken, typename TToken::TReturnType>(inner));
 }
 }
 }

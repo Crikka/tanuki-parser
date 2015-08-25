@@ -227,11 +227,28 @@ class undirect_ref : public ref<TOn> {
       return this->expose()->greedy();
     }
   }
+
   bool stopAtFirstGreedyFail() {
     if (this->isNull()) {
       return false;
     } else {
       return this->expose()->stopAtFirstGreedyFail();
+    }
+  }
+
+  int exactSize() {
+    if (this->isNull()) {
+      return -1;
+    } else {
+      return this->expose()->exactSize();
+    }
+  }
+
+  int biggestSize() {
+    if (this->isNull()) {
+      return -1;
+    } else {
+      return this->expose()->biggestSize();
     }
   }
 
