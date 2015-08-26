@@ -17,6 +17,7 @@
   \
   using tanuki::ref;\
   using tanuki::undirect_ref;\
+  using tanuki::dereference;\
   \
   using tanuki::operator"" _ref;\
 

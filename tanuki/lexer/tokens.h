@@ -271,7 +271,7 @@ class RangeToken : public Token<std::string> {
 
  private:
   undirect_ref<StartWithToken<TLeft>> m_left;
-  undirect_ref<EndWithToken<TRight>>  m_right;
+  undirect_ref<EndWithToken<TRight>> m_right;
 };
 
 // ------ Method --------
@@ -382,15 +382,38 @@ OptionalToken<TToken, TReturn>::OptionalToken(undirect_ref<TToken> token)
 template <typename TToken, typename TReturn>
 ref<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::match(
     const std::string &in) {
-  ref<TReturn> result =
-      (UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->match(in));
-
-  if (result.isNull()) {
+  if (in.empty()) {
     return ref<std::vector<ref<TReturn>>>(new std::vector<ref<TReturn>>());
-  } else {
-    return ref<std::vector<ref<TReturn>>>(
-        new std::vector<ref<TReturn>>({result}));
   }
+
+  ref<std::vector<ref<TReturn>>> result(new std::vector<ref<TReturn>>());
+
+  int exactSize = UnaryToken<TToken, std::vector<ref<TReturn>>>::token().exactSize();
+  int length = in.size();
+
+  if (exactSize == -1) {
+    int biggestSize = UnaryToken<TToken, std::vector<ref<TReturn>>>::token().biggestSize();
+
+    if (length <= biggestSize) {
+      ref<TReturn> subResult = UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->match(in);
+
+      if (subResult) {
+        result = ref<std::vector<ref<TReturn>>>(
+            new std::vector<ref<TReturn>>({subResult}));
+      }
+    }
+  } else {
+    if (length == exactSize) {
+      ref<TReturn> subResult = UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->match(in);
+
+      if (subResult) {
+        result = ref<std::vector<ref<TReturn>>>(
+            new std::vector<ref<TReturn>>({subResult}));
+      }
+    }
+  }
+
+  return result;
 }
 
 template <typename TToken, typename TReturn>

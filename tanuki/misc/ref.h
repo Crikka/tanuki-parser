@@ -212,6 +212,9 @@ class ref {
   ref_friend_all_operator(double);
   ref_friend_all_operator(long);
   ref_friend_all_operator(long long);
+
+  template <typename T>
+  friend T *dereference(ref<T>);
 };
 
 ref_implement_all_operator(int);
@@ -272,5 +275,14 @@ ref<std::string> operator"" _ref(const char *in) {
 
 ref<double> operator"" _ref(long double in) {
   return ref<double>(new double(in));
+}
+
+template <typename T>
+T *dereference(ref<T> ref) {
+  if (ref.isNull()) {
+    throw NullReferenceError();
+  }
+
+  return ref.m_intern->on;
 }
 }
