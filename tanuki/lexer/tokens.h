@@ -34,6 +34,8 @@ class StarToken;
 template <typename, typename>
 class OptionalToken;
 template <typename, typename>
+class StartWithToken;
+template <typename, typename>
 class EndWithToken;
 
 // Binary
@@ -43,6 +45,8 @@ template <typename, typename, typename>
 class OrToken;
 template <typename, typename, typename>
 class AndToken;
+template <typename, typename>
+class RangeToken;
 
 // ~~~~~~~~ Helper
 
@@ -53,16 +57,17 @@ undirect_ref<RegexToken> regex(const std::string &regex);
 undirect_ref<IntegerToken> integer();
 
 // Operator
-template <typename TToken>
-undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>> endWith(
-    undirect_ref<TToken> inner);
-
 template <typename TLeft, typename TRight,
           typename TReturn = typename TLeft::TReturnType>
 undirect_ref<OrToken<TLeft, TRight, TReturn>> operator||(ref<TLeft> left,
                                                          ref<TRight> right);
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
 undirect_ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
+
+template <typename TLeft, typename TRight,
+          typename TReturn = typename TLeft::TReturnType>
+undirect_ref<OrToken<TLeft, TRight, TReturn>> operator||(ref<TLeft> left,
+                                                         ref<TRight> right);
 
 // Helper constants
 undirect_ref<ConstantToken> &space();
@@ -196,6 +201,16 @@ class OptionalToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
 };
 
 /**
+ * @brief The StartWith class
+ */
+template <typename TToken, typename TReturn = typename TToken::TReturnType>
+class StartWithToken : public UnaryToken<TToken, TReturn> {
+ public:
+  explicit StartWithToken(undirect_ref<TToken> inner);
+  ref<TReturn> match(const std::string &in) override;
+};
+
+/**
  * @brief The EndWith class
  */
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
@@ -243,6 +258,20 @@ class AndToken : public BinaryToken<TLeft, TRight, TReturn> {
  public:
   explicit AndToken(ref<TLeft> left, ref<TRight> right);
   ref<TReturn> match(const std::string &in) override;
+};
+
+/**
+ * @brief The RangeToken class
+ */
+template <typename TLeft, typename TRight>
+class RangeToken : public Token<std::string> {
+ public:
+  explicit RangeToken(undirect_ref<TLeft> left, undirect_ref<TRight> right);
+  ref<std::string> match(const std::string &in) override;
+
+ private:
+  undirect_ref<StartWithToken<TLeft>> m_left;
+  undirect_ref<EndWithToken<TRight>>  m_right;
 };
 
 // ------ Method --------
@@ -365,6 +394,67 @@ ref<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::match(
 }
 
 template <typename TToken, typename TReturn>
+StartWithToken<TToken, TReturn>::StartWithToken(undirect_ref<TToken> token)
+    : UnaryToken<TToken, TReturn>(token) {}
+
+template <typename TToken, typename TReturn>
+ref<TReturn> StartWithToken<TToken, TReturn>::match(const std::string &in) {
+  if (in.empty()) {
+    return ref<TReturn>();
+  }
+
+  int exactSize = UnaryToken<TToken, TReturn>::token().exactSize();
+  int length = in.size();
+
+  if (exactSize == -1) {
+    ref<TReturn> result;
+
+    int biggestSize = UnaryToken<TToken, TReturn>::token().biggestSize();
+    int maximum;
+    int current = 0;
+
+    if (biggestSize == -1) {
+      maximum = length;
+    } else {
+      maximum = biggestSize;
+
+      if (maximum > length) {
+        maximum = length;
+      }
+    }
+
+    do {
+      current++;
+      std::string buffer = in.substr(0, current);
+
+      result = UnaryToken<TToken, TReturn>::token()->match(buffer);
+
+      if (result) {
+        break;
+      }
+
+    } while (current < maximum);
+
+    return result;
+  } else {
+    int delta = (in.size() - exactSize);
+
+    if (delta < 0) {
+      return ref<TReturn>();
+    } else {
+      ref<TReturn> result = (UnaryToken<TToken, TReturn>::token()->match(
+          in.substr(0, exactSize)));
+
+      if (result) {
+        return result;
+      } else {
+        return ref<TReturn>();
+      }
+    }
+  }
+}
+
+template <typename TToken, typename TReturn>
 EndWithToken<TToken, TReturn>::EndWithToken(undirect_ref<TToken> token)
     : UnaryToken<TToken, TReturn>(token) {}
 
@@ -376,9 +466,10 @@ ref<TReturn> EndWithToken<TToken, TReturn>::match(const std::string &in) {
 
   int exactSize = UnaryToken<TToken, TReturn>::token().exactSize();
   int length = in.size();
-  ref<TReturn> result;
 
   if (exactSize == -1) {
+    ref<TReturn> result;
+
     int biggestSize = UnaryToken<TToken, TReturn>::token().biggestSize();
     int minimum;
 
@@ -470,11 +561,22 @@ ref<TReturn> AndToken<TLeft, TRight, TReturn>::match(const std::string &in) {
   }
 }
 
-template <typename TToken>
-undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>> endWith(
-    undirect_ref<TToken> inner) {
-  return undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>>(
-      new EndWithToken<TToken, typename TToken::TReturnType>(inner));
+template <typename TLeft, typename TRight>
+RangeToken<TLeft, TRight>::RangeToken(undirect_ref<TLeft> left,
+                                      undirect_ref<TRight> right)
+    : Token<std::string>(), m_left(startWith(left)), m_right(endWith(right)) {}
+
+template <typename TLeft, typename TRight>
+ref<std::string> RangeToken<TLeft, TRight>::match(const std::string &in) {
+  ref<std::string> result;
+
+  if (m_left->match(in)) {
+    if (m_right->match(in)) {
+      result = ref<std::string>(new std::string(in));
+    }
+  }
+
+  return result;
 }
 }
 }

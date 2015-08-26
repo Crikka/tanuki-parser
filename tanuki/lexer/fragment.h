@@ -31,12 +31,17 @@ class Fragment {
   }
 
   template <typename... TRefs>
-  Rule<TResult, TRefs...>* on(TRefs... refs) {
-    Rule<TResult, TRefs...>* rule = new Rule<TResult, TRefs...>(this, refs...);
+  void handle(std::function<ref<TResult>(std::tuple<typename TRefs::TDeepType...>)> callback, TRefs... refs) {
+    Rule<TResult, TRefs...>* rule = new Rule<TResult, TRefs...>(this, refs..., callback);
 
     m_rules.push_back(rule);
+  }
 
-    return rule;
+  template <typename... TRefs>
+  void handle(std::function<ref<TResult>(typename TRefs::TDeepType...)> callback, TRefs... refs) {
+    Rule<TResult, TRefs...>* rule = new Rule<TResult, TRefs...>(this, refs..., callback);
+
+    m_rules.push_back(rule);
   }
 
   tanuki::ref<TResult> match(const std::string& input) {

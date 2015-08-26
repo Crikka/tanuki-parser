@@ -141,7 +141,11 @@ class ref {
   ref(const ref<TOn> &other) : m_intern(other.m_intern) {
     this->m_intern->count++;
   }
-  ref(ref<TOn> &&other) : m_intern(other.m_intern) { this->m_intern->count++; }
+  ref(ref<TOn> &&other) : m_intern(other.m_intern) {
+    if (!isNull()) {
+      this->m_intern->count++;
+    }
+  }
   ref<TOn> &operator=(const ref<TOn> &other) {
     if (isNull()) {
       if (!other.isNull()) {

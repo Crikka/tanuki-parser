@@ -20,23 +20,20 @@ class Matchable {
 template <typename TResult, typename... TRefs>
 class Rule : public Matchable<TResult> {
  public:
-  Rule(tanuki::ref<Fragment<TResult>> context, TRefs... refs)
+  Rule(tanuki::ref<Fragment<TResult>> context, TRefs... refs,
+       std::function<ref<TResult>(typename TRefs::TDeepType...)> callback)
       : Matchable<TResult>(),
         m_context(context),
-        m_refs(this, std::string(), refs...) {}
+        m_refs(this, std::string(), refs...),
+        m_callbackByExpansion(callback) {}
 
-  ref<Fragment<TResult>>& execute(
-      std::function<ref<TResult>(typename TRefs::TDeepType...)> callback) {
-    this->m_callbackByExpansion = callback;
-
-    return m_context;
-  }
-  ref<Fragment<TResult>>& execute(std::function<
-      ref<TResult>(std::tuple<typename TRefs::TDeepType...>)> callback) {
-    this->m_callbackByTuple = callback;
-
-    return m_context;
-  }
+  Rule(tanuki::ref<Fragment<TResult>> context, TRefs... refs,
+       std::function<ref<TResult>(std::tuple<typename TRefs::TDeepType...>)>
+           callback)
+      : Matchable<TResult>(),
+        m_context(context),
+        m_refs(this, std::string(), refs...),
+        m_callbackByTuple(callback) {}
 
   tanuki::ref<TResult> match(const std::string& in) override {
     std::get<1>(m_refs) = in;
