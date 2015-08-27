@@ -212,12 +212,6 @@ class ref {
   friend T *dereference(ref<T>);
 };
 
-ref_implement_all_operator(int);
-ref_implement_all_operator(float);
-ref_implement_all_operator(double);
-ref_implement_all_operator(long);
-ref_implement_all_operator(long long);
-
 template <typename TOn>
 class undirect_ref : public ref<TOn> {
  public:
@@ -260,17 +254,10 @@ class undirect_ref : public ref<TOn> {
   undirect_ref(TOn *on) : ref<TOn>(on) {}
 };
 
-ref<int> operator"" _ref(unsigned long long int in) {
-  return ref<int>(new int(in));
-}
+ref<int> operator"" _ref(unsigned long long int in);
+ref<std::string> operator"" _ref(const char *in);
+ref<double> operator"" _ref(long double in);
 
-ref<std::string> operator"" _ref(const char *in) {
-  return ref<std::string>(new std::string(in));
-}
-
-ref<double> operator"" _ref(long double in) {
-  return ref<double>(new double(in));
-}
 
 template <typename T>
 T *dereference(ref<T> ref) {

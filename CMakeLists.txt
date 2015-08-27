@@ -26,6 +26,7 @@ set(SOURCES
     tanuki/misc/helper.h
     tanuki/misc/metaprog.h
     tanuki/misc/ref.h
+    tanuki/misc/ref.cpp
 )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
