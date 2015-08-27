@@ -15,6 +15,7 @@ template <typename TResult>
 class Matchable {
  public:
   virtual tanuki::ref<TResult> match(const std::string&) = 0;
+  virtual tanuki::Collect<TResult> collect(const std::string&) = 0;
 };
 
 template <typename TResult, typename... TRefs>
@@ -41,60 +42,53 @@ class Rule : public Matchable<TResult> {
     return tanuki::apply(static_resolve, m_refs);
   }
 
+  tanuki::Collect<TResult> collect(const std::string& in) override {
+    std::get<1>(m_refs) = in;
+
+    return tanuki::apply(static_resolve_collect, m_refs);
+  }
+
  private:
   template <typename TRef, typename... TRestRef>
   struct IsRefCallback {
     tanuki::ref<TResult> operator()(Rule<TResult, TRefs...>* rule,
                                     const std::string& in, TRef ref,
                                     TRestRef... rest) {
-      int length = in.size();
-      int maxSizeMatch;
-      int start = 0;
+      std::string skippedIn = in;
 
-      for (int i = 1; i <= length; i++) {
-        std::string buffer(in.substr(start, i));
+      int start;
 
-        if (rule->m_context->shouldIgnore(buffer)) {
-          start += i;
-          length = (in.size() - start);
-          i = 0;
-        } else {
-          auto res = ref->match(buffer);
+      do {
+        start = 0;
 
-          if (res) {
-            bool greedy = ref->greedy();
-            maxSizeMatch = i;
-
-            if (greedy) {
-              auto keep = res;
-              bool stopAtFirstGreedyFail = ref->stopAtFirstGreedyFail();
-
-              // Greedy time
-              i++;
-              while (i <= length) {
-                buffer = (in.substr(start, i));
-                res = ref->match(buffer);
-                if (res) {
-                  keep = res;
-                  maxSizeMatch = i;
-                } else if (stopAtFirstGreedyFail) {
-                  break;
-                }
-
-                i++;
-              };
-
-              res = keep;
-            }
-
-            try {
-              return rule->resolve<TRestRef..., typename TRef::TDeepType>(
-                  in.substr(start + maxSizeMatch), rest..., res);
-            } catch (NoExecuteDefinition&) {
-              throw;
-            }
+        for (int i = 0; i < skippedIn.size(); i++) {
+          if (rule->m_context->shouldSkip(skippedIn.substr(0, i))) {
+            start = i;
+            break;
           }
         }
+
+        skippedIn = skippedIn.substr(start);
+      } while (start != 0);
+
+      auto collected = ref->collect(skippedIn);
+
+      while (!collected.empty()) {
+        auto& last = collected.top();
+
+        try {
+          tanuki::ref<TResult> result =
+              rule->resolve<TRestRef..., typename TRef::TDeepType>(
+                  skippedIn.substr(last.first), rest..., last.second);
+
+          if (result) {
+            return result;
+          }
+        } catch (NoExecuteDefinition&) {
+          throw;
+        }
+
+        collected.pop();
       }
 
       return tanuki::ref<TResult>();
@@ -106,7 +100,7 @@ class Rule : public Matchable<TResult> {
     tanuki::ref<TResult> operator()(Rule<TResult, TRefs...>* rule,
                                     const std::string& in, TRef ref,
                                     TRestRef... rest) {
-      if (in.empty() || rule->m_context->shouldIgnore(in)) {
+      if (in.empty() || rule->m_context->shouldSkip(in)) {
         if (rule->m_callbackByExpansion) {
           return rule->m_callbackByExpansion(rest...);
         } else if (rule->m_callbackByTuple) {
@@ -120,10 +114,88 @@ class Rule : public Matchable<TResult> {
     }
   };
 
+  template <typename TRef, typename... TRestRef>
+  struct IsRefCallbackCollect {
+    tanuki::Collect<TResult> operator()(Rule<TResult, TRefs...>* rule,
+                                        const std::string& in, int initialSize,
+                                        TRef ref, TRestRef... rest) {
+      tanuki::Collect<TResult> result;
+
+      std::string skippedIn = in;
+
+      int start;
+
+      do {
+        start = 0;
+
+        for (int i = 0; i < skippedIn.size(); i++) {
+          if (rule->m_context->shouldSkip(skippedIn.substr(0, i))) {
+            start = i;
+            break;
+          }
+        }
+
+        skippedIn = skippedIn.substr(start);
+      } while (start != 0);
+
+      auto collected = ref->collect(skippedIn);
+
+      while (!collected.empty()) {
+        auto& last = collected.top();
+        try {
+          tanuki::Collect<TResult> followes =
+              rule->resolve_collect<TRestRef..., typename TRef::TDeepType>(
+                  skippedIn.substr(last.first), initialSize, rest...,
+                  last.second);
+
+          while (!followes.empty()) {
+            const std::pair<int, tanuki::ref<TResult>>& follow = followes.top();
+            result.push(follow);
+
+            followes.pop();
+          }
+        } catch (NoExecuteDefinition&) {
+          throw;
+        }
+
+        collected.pop();
+      }
+
+      return result;
+    }
+  };
+
+  template <typename TRef, typename... TRestRef>
+  struct IsNullCallbackCollect {
+    tanuki::Collect<TResult> operator()(Rule<TResult, TRefs...>* rule,
+                                        const std::string& in, int initialSize,
+                                        TRef, TRestRef... rest) {
+      tanuki::Collect<TResult> result;
+
+      if (rule->m_callbackByExpansion) {
+        result.push(std::make_pair(initialSize - in.size(),
+                                   rule->m_callbackByExpansion(rest...)));
+      } else if (rule->m_callbackByTuple) {
+        result.push(
+            std::make_pair(initialSize - in.size(),
+                           rule->m_callbackByTuple(std::make_tuple(rest...))));
+      } else {
+        throw NoExecuteDefinition();
+      }
+
+      return result;
+    }
+  };
+
   static tanuki::ref<TResult> static_resolve(Rule<TResult, TRefs...>* rule,
                                              const std::string& in,
                                              TRefs... refs) {
     return rule->resolve(in, refs..., nullptr);
+  }
+
+  static tanuki::Collect<TResult> static_resolve_collect(
+      Rule<TResult, TRefs...>* rule, const std::string& in, TRefs... refs) {
+    return rule->resolve_collect(in, in.size(), refs..., nullptr);
   }
 
   template <typename TRef, typename... TRestRef>
@@ -134,6 +206,18 @@ class Rule : public Matchable<TResult> {
                      IsNullCallback<TRef, TRestRef...>,
                      IsRefCallback<TRef, TRestRef...>>::result()(this, in, ref,
                                                                  rest...);
+  }
+
+  template <typename TRef, typename... TRestRef>
+  tanuki::Collect<TResult> resolve_collect(const std::string& in,
+                                           int initialSize, TRef ref,
+                                           TRestRef... rest) {
+    return typename if_<
+        std::is_same<TRef, std::nullptr_t>::value,
+        IsNullCallbackCollect<TRef, TRestRef...>,
+        IsRefCallbackCollect<TRef, TRestRef...>>::result()(this, in,
+                                                           initialSize, ref,
+                                                           rest...);
   }
 
   std::function<ref<TResult>(typename TRefs::TDeepType...)>

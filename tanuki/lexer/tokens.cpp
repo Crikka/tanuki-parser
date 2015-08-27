@@ -24,7 +24,8 @@ undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &blank() {
   return res;
 }
 
-undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &lineTerminator() {
+undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> &
+lineTerminator() {
   static undirect_ref<OrToken<ConstantToken, ConstantToken, std::string>> res =
       (constant('\r') or constant('\n'));
 
@@ -80,6 +81,8 @@ undirect_ref<RegexToken> regex(const std::string &regex) {
   return undirect_ref<RegexToken>(new RegexToken(regex));
 }
 
-undirect_ref<IntegerToken> integer() { return undirect_ref<IntegerToken>(new IntegerToken()); }
+undirect_ref<IntegerToken> integer() {
+  return undirect_ref<IntegerToken>(new IntegerToken());
+}
 }
 }

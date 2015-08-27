@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <stack>
+#include <utility>
 
 #include "exception.h"
 
@@ -193,13 +195,6 @@ class ref {
   }
 
   operator bool() const { return (!isNull()); }
-  bool operator==(TOn other) {
-    if (isNull()) {
-      return false;
-    }
-
-    return (*(m_intern->on) == other);
-  }
 
  protected:
   TOn *expose() { return (m_intern->on); }
@@ -285,4 +280,7 @@ T *dereference(ref<T> ref) {
 
   return ref.m_intern->on;
 }
+
+template <typename TReturn>
+using Collect = typename std::stack<std::pair<int, ref<TReturn>>>;
 }

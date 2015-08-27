@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 void testRef() {
   use_tanuki;
 
-  tanuki_expect(10, ref<int>(new int(5)) + ref<int>(new int(5)), "Add int")
+  tanuki_result_expect(10, ref<int>(new int(5)) + ref<int>(new int(5)), "Add int")
 }
 
 void testLexer() {
@@ -91,7 +91,7 @@ void testLexerSimple() {
 
   tanuki_match_expect(true, cst_regexToken->match("Hello"),
                       "Regex exact Match True test");
-  tanuki_expect("Hello", cst_regexToken->match("Hello"),
+  tanuki_result_expect("Hello", cst_regexToken->match("Hello"),
                 "Regex constant expect Hello test");
   tanuki_match_expect(false, cst_regexToken->match(""),
                       "Regex exact Match Empty");
@@ -100,7 +100,7 @@ void testLexerSimple() {
 
   tanuki_match_expect(true, var_regexToken->match("Hello"), "Regex \\w");
 
-  tanuki_expect("Hello", var_regexToken->match("Hello"),
+  tanuki_result_expect("Hello", var_regexToken->match("Hello"),
                 "Regex \\w expect Hello test");
   tanuki_match_expect(false, var_regexToken->match(""), "Regex \\w Empty");
   tanuki_match_expect(true, var_regexToken->match("").isNull(),
@@ -110,7 +110,7 @@ void testLexerSimple() {
   tanuki::ref<tanuki::lexer::IntegerToken> int_ = integer();
 
   tanuki_match_expect(true, int_->match("52"), "Integer True");
-  tanuki_expect(52, int_->match("52"), "Integer Value (true)");
+  tanuki_result_expect(52, int_->match("52"), "Integer Value (true)");
   tanuki_match_expect(false, int_->match("Hello world"), "Integer false");
 }
 
@@ -256,30 +256,30 @@ void testGrammarSimple() {
                            -> ref<int> { return (i / j); },
                        integer(), constant('/'), integer());
 
-  tanuki_expect(10, mainFragment->match("5+5"), "Simple add");
-  tanuki_expect(0, mainFragment->match("5-5"), "Simple less");
-  tanuki_expect(25, mainFragment->match("5*5"), "Simple mult");
-  tanuki_expect(1, mainFragment->match("5/5"), "Simple divide");
+  tanuki_result_expect(10, mainFragment->match("5+5"), "Simple add");
+  tanuki_result_expect(0, mainFragment->match("5-5"), "Simple less");
+  tanuki_result_expect(25, mainFragment->match("5*5"), "Simple mult");
+  tanuki_result_expect(1, mainFragment->match("5/5"), "Simple divide");
 
-  tanuki_expect(20, mainFragment->match("15+5"), "Simple great add");
-  tanuki_expect(-10, mainFragment->match("5-15"), "Simple great less");
-  tanuki_expect(2500, mainFragment->match("50*50"), "Simple great mult");
-  tanuki_expect(10, mainFragment->match("500/50"), "Simple greatdivide");
+  tanuki_result_expect(20, mainFragment->match("15+5"), "Simple great add");
+  tanuki_result_expect(-10, mainFragment->match("5-15"), "Simple great less");
+  tanuki_result_expect(2500, mainFragment->match("50*50"), "Simple great mult");
+  tanuki_result_expect(10, mainFragment->match("500/50"), "Simple greatdivide");
 
-  mainFragment->ignore(blank());
+  mainFragment->skip(blank());
 
-  tanuki_expect(10, mainFragment->match("5 + 5"), "Simple add space");
-  tanuki_expect(0, mainFragment->match("5  - 5"), "Simple less tab");
-  tanuki_expect(25, mainFragment->match("5 * 5"), "Simple mult mix");
-  tanuki_expect(1, mainFragment->match("5      /5"),
+  tanuki_result_expect(10, mainFragment->match("5 + 5"), "Simple add space");
+  tanuki_result_expect(0, mainFragment->match("5  - 5"), "Simple less tab");
+  tanuki_result_expect(25, mainFragment->match("5 * 5"), "Simple mult mix");
+  tanuki_result_expect(1, mainFragment->match("5      /5"),
                 "Simple divide multispace");
 
-  mainFragment->ignore(constant('#'), constant('(') or constant(')'));
+  mainFragment->skip(constant('#'), constant('(') or constant(')'));
 
-  tanuki_expect(10, mainFragment->match("(5 + #5"), "Simple add space hard");
-  tanuki_expect(0, mainFragment->match("5  ###- 5"), "Simple less tab hard");
-  tanuki_expect(25, mainFragment->match("5 *# #5"), "Simple mult mix hard");
-  tanuki_expect(1, mainFragment->match("5   ()##   /5"),
+  tanuki_result_expect(10, mainFragment->match("(5 + #5"), "Simple add space hard");
+  tanuki_result_expect(0, mainFragment->match("5  ###- 5"), "Simple less tab hard");
+  tanuki_result_expect(25, mainFragment->match("5 *# #5"), "Simple mult mix hard");
+  tanuki_result_expect(1, mainFragment->match("5   ()##   /5"),
                 "Simple divide multispace hard");
 }
 
@@ -306,14 +306,14 @@ void testGrammarMultiple() {
 
   sub->handle([](ref<std::string>) { return 25_ref; }, constant("hello"));
 
-  tanuki_expect(25, sub->match("hello"), "Simple verification");
-  tanuki_expect("Everyone", mainFragment->match("Everyone"),
+  tanuki_result_expect(25, sub->match("hello"), "Simple verification");
+  tanuki_result_expect("Everyone", mainFragment->match("Everyone"),
                 "Simple verification");
-  tanuki_expect("Everyone", mainFragment->match("hey Everyone"),
+  tanuki_result_expect("Everyone", mainFragment->match("hey Everyone"),
                 "Simple verification");
-  tanuki_expect("Everyone", mainFragment->match("hello Everyone"),
+  tanuki_result_expect("Everyone", mainFragment->match("hello Everyone"),
                 "Simple string");
-  tanuki_expect(50, mainFragment2->match("hello 25"), "Simple int");
+  tanuki_result_expect(50, mainFragment2->match("hello 25"), "Simple int");
 }
 
 void testGrammarFunny() {
@@ -356,17 +356,17 @@ void testGrammarFunny() {
     return in;
   }, constant("("), mainFragment, constant(")"));
 
-  tanuki_expect(10, mainFragment->match("5+5"), "Add");
-  tanuki_expect(0, mainFragment->match("5-5"), "Less");
-  tanuki_expect(25, mainFragment->match("5*5"), "Mult");
-  tanuki_expect(1, mainFragment->match("5/5"), "Divide");
-  tanuki_expect(10, mainFragment->match("(5+5)"), "Add parenthesis");
-  tanuki_expect(10, mainFragment->match("((((5+5))))"),
+  tanuki_result_expect(10, mainFragment->match("5+5"), "Add");
+  tanuki_result_expect(0, mainFragment->match("5-5"), "Less");
+  tanuki_result_expect(25, mainFragment->match("5*5"), "Mult");
+  tanuki_result_expect(1, mainFragment->match("5/5"), "Divide");
+  tanuki_result_expect(10, mainFragment->match("(5+5)"), "Add parenthesis");
+  tanuki_result_expect(10, mainFragment->match("((((5+5))))"),
                 "Add lot of parenthesis");
 
-  mainFragment->ignore(blank());
+  mainFragment->skip(space());
 
-  tanuki_expect(10, mainFragment->match("((( ( 5 + 5 )) ) ) "),
+  tanuki_result_expect(10, mainFragment->match("((( ( 5 + 5 )) ) ) "),
                 "Add lot of parenthesis with blank");
 }
 
@@ -382,8 +382,8 @@ void testGrammarWithOperator() {
                           ref<std::string>) -> ref<int> { return in->back(); },
                        constant('{'), +mainFragment, constant('}'));
 
-  tanuki_expect(6, mainFragment->match("5++;"), "Simple incr");
-  tanuki_expect(10, mainFragment->match("{5++;9++;}"), "Double incr");
-  tanuki_expect(25, mainFragment->match("{1++;2++;3++;4++;24++;}"),
+  tanuki_result_expect(6, mainFragment->match("5++;"), "Simple incr");
+  tanuki_result_expect(10, mainFragment->match("{5++;9++;}"), "Double incr");
+  tanuki_result_expect(25, mainFragment->match("{1++;2++;3++;4++;24++;}"),
                 "Lot of incr");
 }

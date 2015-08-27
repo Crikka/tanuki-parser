@@ -60,27 +60,43 @@ class Fragment {
     return tanuki::ref<TResult>();
   }
 
+  tanuki::Collect<TResult> collect(const std::string& input) {
+    for (Matchable<TResult>* rule : m_rules) {
+      try {
+        tanuki::Collect<TResult> result = rule->collect(input);
+
+        if (!result.empty()) {
+          return result;
+        }
+      } catch (NoExecuteDefinition&) {
+        throw;
+      }
+    }
+
+    return tanuki::Collect<TResult>();
+  }
+
   template <typename TToken, typename... TOther>
-  void ignore(TToken token, TOther... other) {
-    this->m_ignored.push_back([=](const std::string& in) -> bool {
+  void skip(TToken token, TOther... other) {
+    this->m_skipped.push_back([=](const std::string& in) -> bool {
       return (token->match(in) == true);
     });
 
-    ignore<TOther...>(other...);
+    skip<TOther...>(other...);
   }
 
   template <typename TToken>
-  void ignore(TToken token) {
-    this->m_ignored.push_back([=](const std::string& in) -> bool {
+  void skip(TToken token) {
+    this->m_skipped.push_back([=](const std::string& in) -> bool {
       return (token->match(in) == true);
     });
   }
 
-  bool shouldIgnore(const std::string& in) {
+  bool shouldSkip(const std::string& in) {
     bool res = false;
 
-    for (const std::function<bool(const std::string&)>& ignored : m_ignored) {
-      if (ignored(in)) {
+    for (const std::function<bool(const std::string&)>& skipped : m_skipped) {
+      if (skipped(in)) {
         res = true;
         break;
       }
@@ -91,7 +107,7 @@ class Fragment {
 
  private:
   std::vector<Matchable<TResult>*> m_rules;
-  std::vector<std::function<bool(const std::string&)>> m_ignored;
+  std::vector<std::function<bool(const std::string&)>> m_skipped;
 };
 
 template <typename T>

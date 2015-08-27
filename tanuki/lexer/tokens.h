@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <stack>
 #include <utility>
 
 #include "tanuki/misc/misc.h"
@@ -85,6 +86,7 @@ template <typename TReturn>
 class Token {
  public:
   virtual ref<TReturn> match(const std::string &in) = 0;
+  virtual Collect<TReturn> collect(const std::string &in);
   virtual bool greedy() { return true; }
   virtual bool stopAtFirstGreedyFail() { return true; }
   virtual int exactSize() { return -1; }
@@ -276,6 +278,28 @@ class RangeToken : public Token<std::string> {
 
 // ------ Method --------
 
+template <typename TReturn>
+Collect<TReturn> Token<TReturn>::collect(const std::string &in) {
+  Collect<TReturn> result;
+  int length = in.length();
+  bool hasMatch = false;
+
+  for (int i = 1; i <= length; i++) {
+    std::string buffer = in.substr(0, i);
+
+    ref<TReturn> subResult = this->match(buffer);
+
+    if (subResult) {
+      result.push(std::make_pair(i, subResult));
+      hasMatch = true;
+    } else if (hasMatch && this->stopAtFirstGreedyFail()) {
+        break;
+    }
+  }
+
+  return result;
+}
+
 // Unary
 template <typename TToken, typename TReturn>
 UnaryToken<TToken, TReturn>::UnaryToken(undirect_ref<TToken> token)
@@ -388,14 +412,17 @@ ref<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::match(
 
   ref<std::vector<ref<TReturn>>> result(new std::vector<ref<TReturn>>());
 
-  int exactSize = UnaryToken<TToken, std::vector<ref<TReturn>>>::token().exactSize();
+  int exactSize =
+      UnaryToken<TToken, std::vector<ref<TReturn>>>::token().exactSize();
   int length = in.size();
 
   if (exactSize == -1) {
-    int biggestSize = UnaryToken<TToken, std::vector<ref<TReturn>>>::token().biggestSize();
+    int biggestSize =
+        UnaryToken<TToken, std::vector<ref<TReturn>>>::token().biggestSize();
 
     if (length <= biggestSize) {
-      ref<TReturn> subResult = UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->match(in);
+      ref<TReturn> subResult =
+          UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->match(in);
 
       if (subResult) {
         result = ref<std::vector<ref<TReturn>>>(
@@ -404,7 +431,8 @@ ref<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::match(
     }
   } else {
     if (length == exactSize) {
-      ref<TReturn> subResult = UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->match(in);
+      ref<TReturn> subResult =
+          UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->match(in);
 
       if (subResult) {
         result = ref<std::vector<ref<TReturn>>>(
