@@ -119,6 +119,11 @@ namespace tanuki {
     return ref<type>(new type(in1 / *(in2.m_intern->on)));                 \
   }
 
+template <typename>
+class ref;
+template <typename>
+class undirect_ref;
+
 template <typename TOn>
 class ref {
  public:
@@ -210,6 +215,9 @@ class ref {
 
   template <typename T>
   friend T *dereference(ref<T>);
+
+  template <typename T>
+  friend undirect_ref<T> autoref(T *);
 };
 
 template <typename TOn>
@@ -258,7 +266,6 @@ ref<int> operator"" _ref(unsigned long long int in);
 ref<std::string> operator"" _ref(const char *in);
 ref<double> operator"" _ref(long double in);
 
-
 template <typename T>
 T *dereference(ref<T> ref) {
   if (ref.isNull()) {
@@ -266,6 +273,14 @@ T *dereference(ref<T> ref) {
   }
 
   return ref.m_intern->on;
+}
+
+template <typename T>
+undirect_ref<T> autoref(T *data) {
+  undirect_ref<T> result(data);
+  result.m_intern->count++;
+
+  return result;
 }
 
 template <typename TReturn>
