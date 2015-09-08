@@ -30,7 +30,8 @@ int main(int argc, char* argv[]) {
 void testRef() {
   use_tanuki;
 
-  tanuki_result_expect(10, ref<int>(new int(5)) + ref<int>(new int(5)), "Add int")
+  tanuki_result_expect(10, ref<int>(new int(5)) + ref<int>(new int(5)),
+                       "Add int")
 }
 
 void testLexer() {
@@ -65,6 +66,22 @@ void testLexerConstant() {
   tanuki_match_expect(true, lineTerminator()->match("\n"),
                       "LineTerminator Linux Style  True");
   tanuki_match_expect(false, blank()->match("n"), "LineTerminator False");
+
+  // Digit
+  tanuki_match_expect(true, digit()->match("0"), "Digit 0");
+  tanuki_match_expect(true, digit()->match("5"), "Digit 5");
+  tanuki_match_expect(true, digit()->match("9"), "Digit 9");
+  tanuki_match_expect(false, digit()->match("90"), "Digit 90");
+  tanuki_match_expect(false, digit()->match("a"), "Digit a");
+
+  // Letter
+  tanuki_match_expect(true, letter()->match("a"), "Letter a");
+  tanuki_match_expect(true, letter()->match("e"), "Letter e");
+  tanuki_match_expect(true, letter()->match("A"), "Letter A");
+  tanuki_match_expect(true, letter()->match("Z"), "Letter Z");
+  tanuki_match_expect(true, letter()->match("E"), "Letter E");
+  tanuki_match_expect(false, letter()->match("Ab"), "Letter Ab");
+  tanuki_match_expect(false, letter()->match("9"), "Letter 9");
 }
 
 void testLexerSimple() {
@@ -85,33 +102,23 @@ void testLexerSimple() {
   tanuki_match_expect(false, constant("Hello")->match("hello"),
                       "Constant False");
 
+  // AnyOf
+  tanuki_match_expect(true, anyOf('a', 'b', 'c')->match("a"), "AnyOf True");
+  tanuki_match_expect(true, anyOf('a', 'b', 'c')->match("c"), "AnyOf True");
+  tanuki_match_expect(false, anyOf('a', 'b', 'c')->match("z"), "anyOf False");
+  tanuki_match_expect(false, anyOf('a', 'b', 'c')->match("ab"), "anyOf False");
+
   // Regex
-  tanuki::ref<tanuki::lexer::RegexToken> cst_regexToken = regex("Hello");
-  tanuki::ref<tanuki::lexer::RegexToken> var_regexToken = regex("\\w+");
+  auto tWord = word(letter());
 
-  tanuki_match_expect(true, cst_regexToken->match("Hello"),
-                      "Regex exact Match True test");
-  tanuki_result_expect("Hello", cst_regexToken->match("Hello"),
-                "Regex constant expect Hello test");
-  tanuki_match_expect(false, cst_regexToken->match(""),
-                      "Regex exact Match Empty");
-  tanuki_match_expect(true, var_regexToken->match("").isNull(),
-                      "Regex exact expect Empty Result");
-
-  tanuki_match_expect(true, var_regexToken->match("Hello"), "Regex \\w");
-
-  tanuki_result_expect("Hello", var_regexToken->match("Hello"),
-                "Regex \\w expect Hello test");
-  tanuki_match_expect(false, var_regexToken->match(""), "Regex \\w Empty");
-  tanuki_match_expect(true, var_regexToken->match("").isNull(),
-                      "Regex \\w expect Empty Result");
-
+  tanuki_match_expect(true, tWord->match("Hello"), "Word True test");
+  tanuki_result_expect("Hello", tWord->match("Hello"),
+                       "Word expect Hello test");
+  tanuki_match_expect(false, tWord->match(""), "Word Match Empty");
   // Integer
-  tanuki::ref<tanuki::lexer::IntegerToken> int_ = integer();
-
-  tanuki_match_expect(true, int_->match("52"), "Integer True");
-  tanuki_result_expect(52, int_->match("52"), "Integer Value (true)");
-  tanuki_match_expect(false, int_->match("Hello world"), "Integer false");
+  tanuki_match_expect(true, integer()->match("52"), "Integer True");
+  tanuki_result_expect(52, integer()->match("52"), "Integer Value (true)");
+  tanuki_match_expect(false, integer()->match("Hello world"), "Integer false");
 }
 
 void testLexerUnary() {
@@ -141,15 +148,6 @@ void testLexerUnary() {
   tanuki_match_expect(
       false, (+(constant("Hello") or constant("hell")))->match("Hellohello"),
       "Plus Complex (or) false");
-  tanuki_match_expect(
-      true, (+(constant("Hello") or regex("\\w\\w")))->match("Hellohello"),
-      "Plus Complex (regex) true");
-  tanuki_match_expect(
-      true, (+(constant("Hello") or regex("\\w\\w")))->match("Hellohelloo"),
-      "Plus Complex (regex/hard) true");
-  tanuki_match_expect(
-      false, (+(constant("Hell") or regex("\\w\\w")))->match("Hellohelloo"),
-      "Plus Complex (regex) false");
 
   // Star
   tanuki_match_expect(true, (*constant("Hello"))->match("HelloHello"),
@@ -227,7 +225,7 @@ void testLexerBinary() {
                       (constant("Hello") and constant("hello"))->match("hello"),
                       "And one member ok but not other");
   tanuki_match_expect(true,
-                      (constant("Hello") and regex("\\w+"))->match("Hello"),
+                      (constant("Hello") and word(letter()))->match("Hello"),
                       "And Constant + Regexp True");
 }
 
@@ -243,18 +241,18 @@ void testGrammarSimple() {
 
   undirect_ref<Fragment<int>> mainFragment = fragment<int>();
 
-  mainFragment->handle([](ref<int> i, ref<std::string>, ref<int> j)
-                           -> ref<int> { return (i + j); },
-                       integer(), constant('+'), integer());
-  mainFragment->handle([](ref<int> i, ref<std::string>, ref<int> j)
-                           -> ref<int> { return (i - j); },
-                       integer(), constant('-'), integer());
-  mainFragment->handle([](ref<int> i, ref<std::string>, ref<int> j)
-                           -> ref<int> { return (i * j); },
-                       integer(), constant('*'), integer());
-  mainFragment->handle([](ref<int> i, ref<std::string>, ref<int> j)
-                           -> ref<int> { return (i / j); },
-                       integer(), constant('/'), integer());
+  mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
+    return (i + j);
+  }, integer(), constant('+'), integer());
+  mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
+    return (i - j);
+  }, integer(), constant('-'), integer());
+  mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
+    return (i * j);
+  }, integer(), constant('*'), integer());
+  mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
+    return (i / j);
+  }, integer(), constant('/'), integer());
 
   tanuki_result_expect(10, mainFragment->match("5+5"), "Simple add");
   tanuki_result_expect(0, mainFragment->match("5-5"), "Simple less");
@@ -272,15 +270,18 @@ void testGrammarSimple() {
   tanuki_result_expect(0, mainFragment->match("5  - 5"), "Simple less tab");
   tanuki_result_expect(25, mainFragment->match("5 * 5"), "Simple mult mix");
   tanuki_result_expect(1, mainFragment->match("5      /5"),
-                "Simple divide multispace");
+                       "Simple divide multispace");
 
   mainFragment->skip(constant('#'), constant('(') or constant(')'));
 
-  tanuki_result_expect(10, mainFragment->match("(5 + #5"), "Simple add space hard");
-  tanuki_result_expect(0, mainFragment->match("5  ###- 5"), "Simple less tab hard");
-  tanuki_result_expect(25, mainFragment->match("5 *# #5"), "Simple mult mix hard");
+  tanuki_result_expect(10, mainFragment->match("(5 + #5"),
+                       "Simple add space hard");
+  tanuki_result_expect(0, mainFragment->match("5  ###- 5"),
+                       "Simple less tab hard");
+  tanuki_result_expect(25, mainFragment->match("5 *# #5"),
+                       "Simple mult mix hard");
   tanuki_result_expect(1, mainFragment->match("5   ()##   /5"),
-                "Simple divide multispace hard");
+                       "Simple divide multispace hard");
 }
 
 void testGrammarMultiple() {
@@ -290,17 +291,17 @@ void testGrammarMultiple() {
   undirect_ref<Fragment<int>> mainFragment2 = fragment<int>();
   undirect_ref<Fragment<int>> sub = fragment<int>();
 
-  mainFragment->handle([](ref<std::string>, ref<std::string>,
-                          ref<std::string> word) { return word; },
-                       constant("hey"), space(), regex("\\w+"));
-  mainFragment->handle([](ref<int> i, ref<std::string>, ref<std::string> word) {
+  mainFragment->handle([](ref<std::string>, ref<char>, ref<std::string> word) {
     return word;
-  }, sub, space(), regex("\\w+"));
+  }, constant("hey"), space(), word(letter()));
+  mainFragment->handle([](ref<int> i, ref<char>, ref<std::string> word) {
+    return word;
+  }, sub, space(), word(letter()));
 
   mainFragment->handle([](ref<std::string> word) { return word; },
-                       regex("\\w+"));
+                       word(letter()));
 
-  mainFragment2->handle([](ref<int> i, ref<std::string>, ref<int> number) {
+  mainFragment2->handle([](ref<int> i, ref<char>, ref<int> number) {
     return (i + number);
   }, sub, space(), integer());
 
@@ -308,11 +309,11 @@ void testGrammarMultiple() {
 
   tanuki_result_expect(25, sub->match("hello"), "Simple verification");
   tanuki_result_expect("Everyone", mainFragment->match("Everyone"),
-                "Simple verification");
+                       "Simple verification");
   tanuki_result_expect("Everyone", mainFragment->match("hey Everyone"),
-                "Simple verification");
+                       "Simple verification");
   tanuki_result_expect("Everyone", mainFragment->match("hello Everyone"),
-                "Simple string");
+                       "Simple string");
   tanuki_result_expect(50, mainFragment2->match("hello 25"), "Simple int");
 }
 
@@ -321,28 +322,57 @@ void testGrammarFunny() {
 
   typedef std::function<ref<int>(ref<int>, ref<int>)> OperatorReturnType;
 
-  class Operator : public tanuki::lexer::Token<OperatorReturnType> {
+  class Operator : public tanuki::Token<OperatorReturnType> {
    public:
     ref<OperatorReturnType> match(const std::string& in) {
       if (in.size() == 1) {
         if (in[0] == '+') {
           return ref<OperatorReturnType>(new OperatorReturnType(
               [](ref<int> x, ref<int> y) -> ref<int> { return x + y; }));
-        }
-        if (in[0] == '-') {
+        } else if (in[0] == '-') {
           return ref<OperatorReturnType>(new OperatorReturnType(
               [](ref<int> x, ref<int> y) -> ref<int> { return x - y; }));
-        }
-        if (in[0] == '*') {
+        } else if (in[0] == '*') {
           return ref<OperatorReturnType>(new OperatorReturnType(
               [](ref<int> x, ref<int> y) -> ref<int> { return x * y; }));
-        }
-        if (in[0] == '/') {
+        } else if (in[0] == '/') {
           return ref<OperatorReturnType>(new OperatorReturnType(
               [](ref<int> x, ref<int> y) -> ref<int> { return x / y; }));
+        } else {
+          return ref<OperatorReturnType>();
         }
       } else {
         return ref<OperatorReturnType>();
+      }
+    }
+
+    tanuki::Collect<OperatorReturnType> collect(const std::string& in) {
+      if (in.empty()) {
+        return std::make_pair(0, ref<OperatorReturnType>());
+      } else {
+        if (in[0] == '+') {
+          return std::make_pair(
+              1,
+              ref<OperatorReturnType>(new OperatorReturnType(
+                  [](ref<int> x, ref<int> y) -> ref<int> { return x + y; })));
+        } else if (in[0] == '-') {
+          return std::make_pair(
+              1,
+              ref<OperatorReturnType>(new OperatorReturnType(
+                  [](ref<int> x, ref<int> y) -> ref<int> { return x - y; })));
+        } else if (in[0] == '*') {
+          return std::make_pair(
+              1,
+              ref<OperatorReturnType>(new OperatorReturnType(
+                  [](ref<int> x, ref<int> y) -> ref<int> { return x * y; })));
+        } else if (in[0] == '/') {
+          return std::make_pair(
+              1,
+              ref<OperatorReturnType>(new OperatorReturnType(
+                  [](ref<int> x, ref<int> y) -> ref<int> { return x / y; })));
+        } else {
+          return std::make_pair(0, ref<OperatorReturnType>());
+        }
       }
     }
   };
@@ -362,12 +392,12 @@ void testGrammarFunny() {
   tanuki_result_expect(1, mainFragment->match("5/5"), "Divide");
   tanuki_result_expect(10, mainFragment->match("(5+5)"), "Add parenthesis");
   tanuki_result_expect(10, mainFragment->match("((((5+5))))"),
-                "Add lot of parenthesis");
+                       "Add lot of parenthesis");
 
   mainFragment->skip(space());
 
   tanuki_result_expect(10, mainFragment->match("((( ( 5 + 5 )) ) ) "),
-                "Add lot of parenthesis with blank");
+                       "Add lot of parenthesis with blank");
 }
 
 void testGrammarWithOperator() {
@@ -375,11 +405,11 @@ void testGrammarWithOperator() {
 
   undirect_ref<Fragment<int>> mainFragment = fragment<int>();
 
-  mainFragment->handle([](ref<int> i, ref<std::string>, ref<std::string>)
+  mainFragment->handle([](ref<int> i, ref<std::string>, ref<char>)
                            -> ref<int> { return (i + 1); },
                        integer(), constant("++"), constant(';'));
-  mainFragment->handle([](ref<std::string>, ref<std::vector<ref<int>>> in,
-                          ref<std::string>) -> ref<int> { return in->back(); },
+  mainFragment->handle([](ref<char>, ref<std::vector<ref<int>>> in,
+                          ref<char>) -> ref<int> { return in->back(); },
                        constant('{'), +mainFragment, constant('}'));
 
   tanuki_result_expect(6, mainFragment->match("5++;"), "Simple incr");

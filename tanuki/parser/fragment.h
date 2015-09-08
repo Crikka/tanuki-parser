@@ -6,14 +6,9 @@
 #include "tanuki/misc/misc.h"
 #include "tanuki/misc/exception.h"
 
+#include "rule.h"
+
 namespace tanuki {
-namespace lexer {
-template <typename>
-class Matchable;
-
-template <typename, typename...>
-class Rule;
-
 template <typename TResult>
 class Fragment {
  public:
@@ -24,7 +19,7 @@ class Fragment {
   int exactSize() { return -1; }
   int biggestSize() { return -1; }
 
-  ~Fragment() {
+  virtual ~Fragment() {
     for (Matchable<TResult>* rule : m_rules) {
       delete rule;
     }
@@ -32,14 +27,14 @@ class Fragment {
 
   template <typename... TRefs>
   void handle(std::function<ref<TResult>(std::tuple<typename TRefs::TDeepType...>)> callback, TRefs... refs) {
-    Rule<TResult, TRefs...>* rule = new Rule<TResult, TRefs...>(this, refs..., callback);
+    Rule<TResult, TRefs...>* rule = new Rule<TResult, TRefs...>(autoref(this), refs..., callback);
 
     m_rules.push_back(rule);
   }
 
   template <typename... TRefs>
   void handle(std::function<ref<TResult>(typename TRefs::TDeepType...)> callback, TRefs... refs) {
-    Rule<TResult, TRefs...>* rule = new Rule<TResult, TRefs...>(this, refs..., callback);
+    Rule<TResult, TRefs...>* rule = new Rule<TResult, TRefs...>(autoref(this), refs..., callback);
 
     m_rules.push_back(rule);
   }
@@ -65,7 +60,7 @@ class Fragment {
       try {
         tanuki::Collect<TResult> result = rule->collect(input);
 
-        if (!result.empty()) {
+        if (result.second) {
           return result;
         }
       } catch (NoExecuteDefinition&) {
@@ -113,6 +108,5 @@ class Fragment {
 template <typename T>
 tanuki::undirect_ref<Fragment<T>> fragment() {
   return tanuki::undirect_ref<Fragment<T>>(new Fragment<T>);
-}
 }
 }

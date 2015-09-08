@@ -1,32 +1,34 @@
 #pragma once
 
-#define use_tanuki\
-  using tanuki::lexer::constant;\
-  using tanuki::lexer::regex;\
-  using tanuki::lexer::integer;\
-  using tanuki::lexer::startWith;\
-  using tanuki::lexer::endWith;\
-  using tanuki::lexer::range;\
-  using tanuki::lexer::space;\
-  using tanuki::lexer::tab;\
-  using tanuki::lexer::blank;\
-  using tanuki::lexer::lineTerminator;\
-  using tanuki::lexer::fragment;\
-  \
-  using tanuki::lexer::Fragment;\
-  \
-  using tanuki::ref;\
-  using tanuki::undirect_ref;\
-  using tanuki::dereference;\
-  using tanuki::autoref;\
-  \
-  using tanuki::operator"" _ref;\
-
+#define use_tanuki              \
+  using tanuki::constant;       \
+  using tanuki::integer;        \
+  using tanuki::startWith;      \
+  using tanuki::endWith;        \
+  using tanuki::range;          \
+  using tanuki::anyOf;          \
+  using tanuki::anyIn;          \
+  using tanuki::word;           \
+  using tanuki::space;          \
+  using tanuki::tab;            \
+  using tanuki::blank;          \
+  using tanuki::lineTerminator; \
+  using tanuki::digit;          \
+  using tanuki::letter;         \
+  using tanuki::fragment;       \
+                                \
+  using tanuki::Fragment;       \
+                                \
+  using tanuki::ref;            \
+  using tanuki::undirect_ref;   \
+  using tanuki::dereference;    \
+  using tanuki::autoref;        \
+                                \
+  using tanuki::operator"" _ref;
 
 #include <iostream>
 
-#include "lexer/lexer.h"
+#include "parser/parser.h"
 #include "exception"
 
-namespace tanuki {
-}
+namespace tanuki {}

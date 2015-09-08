@@ -8,8 +8,6 @@
 #include "tokens.h"
 
 namespace tanuki {
-namespace lexer {
-
 // Unary
 template <typename, typename>
 class NotToken;
@@ -49,15 +47,6 @@ undirect_ref<StarToken<TToken, TReturn>> operator*(undirect_ref<TToken> token);
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
 undirect_ref<OptionalToken<TToken, TReturn>> operator~(
     undirect_ref<TToken> token);
-template <typename TToken>
-undirect_ref<StartWithToken<TToken, typename TToken::TReturnType>> startWith(
-    undirect_ref<TToken>);
-template <typename TToken>
-undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>> endWith(
-    undirect_ref<TToken>);
-template <typename TLeft, typename TRight>
-undirect_ref<RangeToken<TLeft, TRight>> range(undirect_ref<TLeft>,
-                                              undirect_ref<TRight>);
 
 // Operator
 template <typename TToken, typename TReturn>
@@ -97,27 +86,5 @@ undirect_ref<OptionalToken<TToken, TReturn>> operator~(
     undirect_ref<TToken> token) {
   return undirect_ref<OptionalToken<TToken, TReturn>>(
       new OptionalToken<TToken, TReturn>(token));
-}
-
-template <typename TToken>
-undirect_ref<StartWithToken<TToken, typename TToken::TReturnType>> startWith(
-    undirect_ref<TToken> inner) {
-  return undirect_ref<StartWithToken<TToken, typename TToken::TReturnType>>(
-      new StartWithToken<TToken, typename TToken::TReturnType>(inner));
-}
-
-template <typename TToken>
-undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>> endWith(
-    undirect_ref<TToken> inner) {
-  return undirect_ref<EndWithToken<TToken, typename TToken::TReturnType>>(
-      new EndWithToken<TToken, typename TToken::TReturnType>(inner));
-}
-
-template <typename TLeft, typename TRight>
-undirect_ref<RangeToken<TLeft, TRight>> range(undirect_ref<TLeft> left,
-                                              undirect_ref<TRight> right) {
-  return undirect_ref<RangeToken<TLeft, TRight>>(
-      new RangeToken<TLeft, TRight>(left, right));
-}
 }
 }

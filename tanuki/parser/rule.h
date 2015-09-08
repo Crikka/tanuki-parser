@@ -7,8 +7,7 @@
 #include "tanuki/misc/misc.h"
 
 namespace tanuki {
-namespace lexer {
-template <typename>
+template <typename TResult>
 class Fragment;
 
 template <typename TResult>
@@ -73,13 +72,11 @@ class Rule : public Matchable<TResult> {
 
       auto collected = ref->collect(skippedIn);
 
-      while (!collected.empty()) {
-        auto& last = collected.top();
-
+      if (collected.second) {
         try {
           tanuki::ref<TResult> result =
               rule->resolve<TRestRef..., typename TRef::TDeepType>(
-                  skippedIn.substr(last.first), rest..., last.second);
+                  skippedIn.substr(collected.first), rest..., collected.second);
 
           if (result) {
             return result;
@@ -87,8 +84,6 @@ class Rule : public Matchable<TResult> {
         } catch (NoExecuteDefinition&) {
           throw;
         }
-
-        collected.pop();
       }
 
       return tanuki::ref<TResult>();
@@ -119,7 +114,7 @@ class Rule : public Matchable<TResult> {
     tanuki::Collect<TResult> operator()(Rule<TResult, TRefs...>* rule,
                                         const std::string& in, int initialSize,
                                         TRef ref, TRestRef... rest) {
-      tanuki::Collect<TResult> result;
+      tanuki::Collect<TResult> result(std::make_pair(0, tanuki::ref<TResult>()));
 
       std::string skippedIn = in;
 
@@ -140,25 +135,14 @@ class Rule : public Matchable<TResult> {
 
       auto collected = ref->collect(skippedIn);
 
-      while (!collected.empty()) {
-        auto& last = collected.top();
-        try {
-          tanuki::Collect<TResult> followes =
-              rule->resolve_collect<TRestRef..., typename TRef::TDeepType>(
-                  skippedIn.substr(last.first), initialSize, rest...,
-                  last.second);
-
-          while (!followes.empty()) {
-            const std::pair<int, tanuki::ref<TResult>>& follow = followes.top();
-            result.push(follow);
-
-            followes.pop();
+      if (collected.second) {
+          try {
+            result = rule->resolve_collect<TRestRef..., typename TRef::TDeepType>(
+                skippedIn.substr(collected.first), initialSize, rest...,
+                collected.second);
+          } catch (NoExecuteDefinition&) {
+            throw;
           }
-        } catch (NoExecuteDefinition&) {
-          throw;
-        }
-
-        collected.pop();
       }
 
       return result;
@@ -173,12 +157,12 @@ class Rule : public Matchable<TResult> {
       tanuki::Collect<TResult> result;
 
       if (rule->m_callbackByExpansion) {
-        result.push(std::make_pair(initialSize - in.size(),
-                                   rule->m_callbackByExpansion(rest...)));
+        result = std::make_pair(initialSize - in.size(),
+                                rule->m_callbackByExpansion(rest...));
       } else if (rule->m_callbackByTuple) {
-        result.push(
+        result =
             std::make_pair(initialSize - in.size(),
-                           rule->m_callbackByTuple(std::make_tuple(rest...))));
+                           rule->m_callbackByTuple(std::make_tuple(rest...)));
       } else {
         throw NoExecuteDefinition();
       }
@@ -224,8 +208,7 @@ class Rule : public Matchable<TResult> {
       m_callbackByExpansion;
   std::function<ref<TResult>(std::tuple<typename TRefs::TDeepType...>)>
       m_callbackByTuple;
-  ref<Fragment<TResult>> m_context;
   std::tuple<Rule<TResult, TRefs...>*, std::string, TRefs...> m_refs;
+  tanuki::ref<Fragment<TResult>> m_context;
 };
-}
 }

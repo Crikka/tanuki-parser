@@ -13,11 +13,12 @@ set(SOURCES
     tanuki/tanuki.h
 
     # Lexer
-    tanuki/lexer/lexer.h
-    tanuki/lexer/operation.h
-    tanuki/lexer/tokens
-    tanuki/lexer/fragment.h
-    tanuki/lexer/rule.h
+    tanuki/parser/parser.h
+    tanuki/parser/operation.h
+    tanuki/parser/tokens
+    tanuki/parser/fragment.h
+    tanuki/parser/rule.h
+    tanuki/parser/special
 
     # Miscellaneous
     tanuki/misc/misc.h
@@ -38,6 +39,5 @@ SET_TARGET_PROPERTIES(TanukiTests PROPERTIES LINKER_LANGUAGE CXX)
 add_library(tanuki SHARED ${SOURCES})
 SET_TARGET_PROPERTIES(tanuki PROPERTIES LINKER_LANGUAGE CXX)
 
-target_link_libraries(tanuki re2)
 target_link_libraries(TanukiTests tanuki)
 

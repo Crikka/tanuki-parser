@@ -19,4 +19,7 @@ ref<double> operator"" _ref(long double in) {
   return ref<double>(new double(in));
 }
 
+ref<char> operator"" _ref(char in) {
+  return ref<char>(new char(in));
+}
 }

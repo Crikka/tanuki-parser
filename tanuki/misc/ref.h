@@ -146,7 +146,9 @@ class ref {
   }
 
   ref(const ref<TOn> &other) : m_intern(other.m_intern) {
-    this->m_intern->count++;
+    if (!isNull()) {
+      this->m_intern->count++;
+    }
   }
   ref(ref<TOn> &&other) : m_intern(other.m_intern) {
     if (!isNull()) {
@@ -265,6 +267,7 @@ class undirect_ref : public ref<TOn> {
 ref<int> operator"" _ref(unsigned long long int in);
 ref<std::string> operator"" _ref(const char *in);
 ref<double> operator"" _ref(long double in);
+ref<char> operator"" _ref(char in);
 
 template <typename T>
 T *dereference(ref<T> ref) {
@@ -284,5 +287,5 @@ undirect_ref<T> autoref(T *data) {
 }
 
 template <typename TReturn>
-using Collect = typename std::stack<std::pair<int, ref<TReturn>>>;
+using Collect = typename std::pair<int, ref<TReturn>>;
 }
