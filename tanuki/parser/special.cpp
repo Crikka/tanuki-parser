@@ -1,5 +1,7 @@
 #include "special.h"
 
+#include "operation.h"
+
 namespace tanuki {
 undirect_ref<ConstantToken> constant(const std::string &constant) {
   return undirect_ref<ConstantToken>(new ConstantToken(constant));

@@ -52,16 +52,6 @@ class WordToken;
 
 // ~~~~~~~~ Helper
 
-// Operator
-template <typename TLeft, typename TRight,
-          typename TReturn = typename TLeft::TReturnType>
-undirect_ref<OrToken<TLeft, TRight, TReturn>> operator||(ref<TLeft> left,
-                                                         ref<TRight> right);
-template <typename TToken, typename TReturn = typename TToken::TReturnType>
-undirect_ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
-
-// Declaration
-
 /**
  * @brief The Token class is the root class of Tokens.
  */
