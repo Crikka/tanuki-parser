@@ -4,3 +4,4 @@
 #include "helper.h"
 #include "metaprog.h"
 #include "ref.h"
+#include "string.h"

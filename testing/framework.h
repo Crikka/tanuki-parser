@@ -31,11 +31,11 @@ std::vector<std::string> tanuki_tests_names_stack;
       tanuki_local_number_of_succeed_tests[local_name]++;                    \
     }                                                                        \
   } else {                                                                   \
-    std::cout << "\x1B[34mTestTest[" message                                 \
-                 "]\x1B[0m : \x1B[31mFailed\x1B[0m" << std::endl;            \
+    std::cout << "\x1B[34mTest[" message "]\x1B[0m : \x1B[31mFailed\x1B[0m"  \
+              << std::endl;                                                  \
   }
 
-#define tanuki_result_expect(result, test, message)                                 \
+#define tanuki_result_expect(result, test, message)                          \
   tanuki_number_of_tests++;                                                  \
   for (const std::string &local_name : tanuki_tests_names_stack) {           \
     tanuki_local_number_of_tests[local_name]++;                              \
@@ -49,7 +49,7 @@ std::vector<std::string> tanuki_tests_names_stack;
   if (!tanuki_tests_names_stack.empty()) {                                   \
     std::cout << "> ";                                                       \
   }                                                                          \
-  if (*tanuki::dereference(test) == result) {                                                      \
+  if (*tanuki::dereference(test) == result) {                                \
     std::cout << "\x1B[34mTest[" message "]\x1B[0m : \x1B[32mSuccess\x1B[0m" \
               << std::endl;                                                  \
     tanuki_number_of_succeed_tests++;                                        \

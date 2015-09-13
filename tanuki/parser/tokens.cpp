@@ -9,12 +9,12 @@ namespace tanuki {
 ConstantToken::ConstantToken(const std::string &constant)
     : Token<std::string>(), m_constant(constant) {}
 
-ref<std::string> ConstantToken::match(const std::string &in) {
-  return ((m_constant == in) ? ref<std::string>(new std::string(m_constant))
+ref<std::string> ConstantToken::match(const tanuki::String &in) {
+  return ((in == m_constant) ? ref<std::string>(new std::string(m_constant))
                              : ref<std::string>());
 }
 
-Collect<std::string> ConstantToken::collect(const std::string &in) {
+Collect<std::string> ConstantToken::collect(const tanuki::String &in) {
   int length = m_constant.size();
 
   if (in.size() < length) {
@@ -40,7 +40,7 @@ Collect<std::string> ConstantToken::collect(const std::string &in) {
 
 CharToken::CharToken(char character) : Token<char>(), m_character(character) {}
 
-ref<char> CharToken::match(const std::string &in) {
+ref<char> CharToken::match(const tanuki::String &in) {
   if (in.size() == 1) {
     return ((in[0] == m_character) ? ref<char>(new char(m_character))
                                    : ref<char>());
@@ -49,7 +49,7 @@ ref<char> CharToken::match(const std::string &in) {
   }
 }
 
-Collect<char> CharToken::collect(const std::string &in) {
+Collect<char> CharToken::collect(const tanuki::String &in) {
   if (in.empty()) {
     return std::make_pair(0, ref<char>());
   } else {
@@ -63,7 +63,7 @@ Collect<char> CharToken::collect(const std::string &in) {
 
 IntegerToken::IntegerToken() : Token<int>() {}
 
-ref<int> IntegerToken::match(const std::string &in) {
+ref<int> IntegerToken::match(const tanuki::String &in) {
   static auto inner(word(anyIn('0', '9')));
 
   ref<std::string> result(inner->match(in));
@@ -76,7 +76,7 @@ ref<int> IntegerToken::match(const std::string &in) {
   }
 }
 
-Collect<int> IntegerToken::collect(const std::string &in) {
+Collect<int> IntegerToken::collect(const tanuki::String &in) {
   static auto inner(word(anyIn('0', '9')));
 
   Collect<std::string> result(inner->collect(in));
@@ -104,7 +104,7 @@ AnyOfToken::AnyOfToken() : Token<char>() {
 
 void AnyOfToken::validate(char character) { this->m_intern[character] = true; }
 
-ref<char> AnyOfToken::match(const std::string &in) {
+ref<char> AnyOfToken::match(const tanuki::String &in) {
   if (in.size() == 1) {
     return ((this->m_intern[in[0]]) ? ref<char>(new char(in[0])) : ref<char>());
   } else {
@@ -112,7 +112,7 @@ ref<char> AnyOfToken::match(const std::string &in) {
   }
 }
 
-Collect<char> AnyOfToken::collect(const std::string &in) {
+Collect<char> AnyOfToken::collect(const tanuki::String &in) {
   if (in.empty()) {
     return std::make_pair(0, ref<char>());
   } else {
@@ -129,7 +129,7 @@ AnyInToken::AnyInToken(char inferiorBound, char superiorBound)
       m_inferiorBound(inferiorBound),
       m_superiorBound(superiorBound) {}
 
-ref<char> AnyInToken::match(const std::string &in) {
+ref<char> AnyInToken::match(const tanuki::String &in) {
   if (in.size() == 1) {
     return (((in[0] >= m_inferiorBound) and (in[0] <= m_superiorBound))
                 ? ref<char>(new char(in[0]))
@@ -139,7 +139,7 @@ ref<char> AnyInToken::match(const std::string &in) {
   }
 }
 
-Collect<char> AnyInToken::collect(const std::string &in) {
+Collect<char> AnyInToken::collect(const tanuki::String &in) {
   if (in.empty()) {
     return std::make_pair(0, ref<char>());
   } else {
@@ -154,7 +154,7 @@ Collect<char> AnyInToken::collect(const std::string &in) {
 WordToken::WordToken(Token<char> *inner)
     : Token<std::string>(), m_inner(+(undirect_ref<Token<char>>(inner))) {}
 
-ref<std::string> WordToken::match(const std::string &in) {
+ref<std::string> WordToken::match(const tanuki::String &in) {
   ref<std::vector<ref<char>>> result(m_inner->match(in));
 
   if (result) {
@@ -171,7 +171,7 @@ ref<std::string> WordToken::match(const std::string &in) {
   }
 }
 
-Collect<std::string> WordToken::collect(const std::string &in) {
+Collect<std::string> WordToken::collect(const tanuki::String &in) {
   Collect<std::vector<ref<char>>> result(m_inner->collect(in));
 
   if (result.second) {

@@ -13,35 +13,37 @@ class Fragment;
 template <typename TResult>
 class Matchable {
  public:
-  virtual tanuki::ref<TResult> match(const std::string&) = 0;
-  virtual tanuki::Collect<TResult> collect(const std::string&) = 0;
+  virtual ~Matchable() = default;
+
+  virtual tanuki::ref<TResult> match(const tanuki::String&) = 0;
+  virtual tanuki::Collect<TResult> collect(const tanuki::String&) = 0;
 };
 
 template <typename TResult, typename... TRefs>
 class Rule : public Matchable<TResult> {
  public:
-  Rule(tanuki::ref<Fragment<TResult>> context, TRefs... refs,
+  Rule(Fragment<TResult>* context, TRefs... refs,
        std::function<ref<TResult>(typename TRefs::TDeepType...)> callback)
       : Matchable<TResult>(),
         m_context(context),
-        m_refs(this, std::string(), refs...),
+        m_refs(this, tanuki::String(), refs...),
         m_callbackByExpansion(callback) {}
 
-  Rule(tanuki::ref<Fragment<TResult>> context, TRefs... refs,
+  Rule(Fragment<TResult>* context, TRefs... refs,
        std::function<ref<TResult>(std::tuple<typename TRefs::TDeepType...>)>
            callback)
       : Matchable<TResult>(),
         m_context(context),
-        m_refs(this, std::string(), refs...),
+        m_refs(this, tanuki::String(), refs...),
         m_callbackByTuple(callback) {}
 
-  tanuki::ref<TResult> match(const std::string& in) override {
+  tanuki::ref<TResult> match(const tanuki::String& in) override {
     std::get<1>(m_refs) = in;
 
     return tanuki::apply(static_resolve, m_refs);
   }
 
-  tanuki::Collect<TResult> collect(const std::string& in) override {
+  tanuki::Collect<TResult> collect(const tanuki::String& in) override {
     std::get<1>(m_refs) = in;
 
     return tanuki::apply(static_resolve_collect, m_refs);
@@ -51,9 +53,9 @@ class Rule : public Matchable<TResult> {
   template <typename TRef, typename... TRestRef>
   struct IsRefCallback {
     tanuki::ref<TResult> operator()(Rule<TResult, TRefs...>* rule,
-                                    const std::string& in, TRef ref,
+                                    const tanuki::String& in, TRef ref,
                                     TRestRef... rest) {
-      std::string skippedIn = in;
+      tanuki::String skippedIn = in;
 
       int start;
 
@@ -93,7 +95,7 @@ class Rule : public Matchable<TResult> {
   template <typename TRef, typename... TRestRef>
   struct IsNullCallback {
     tanuki::ref<TResult> operator()(Rule<TResult, TRefs...>* rule,
-                                    const std::string& in, TRef ref,
+                                    const tanuki::String& in, TRef ref,
                                     TRestRef... rest) {
       if (in.empty() || rule->m_context->shouldSkip(in)) {
         if (rule->m_callbackByExpansion) {
@@ -112,11 +114,13 @@ class Rule : public Matchable<TResult> {
   template <typename TRef, typename... TRestRef>
   struct IsRefCallbackCollect {
     tanuki::Collect<TResult> operator()(Rule<TResult, TRefs...>* rule,
-                                        const std::string& in, int initialSize,
-                                        TRef ref, TRestRef... rest) {
-      tanuki::Collect<TResult> result(std::make_pair(0, tanuki::ref<TResult>()));
+                                        const tanuki::String& in,
+                                        int initialSize, TRef ref,
+                                        TRestRef... rest) {
+      tanuki::Collect<TResult> result(
+          std::make_pair(0, tanuki::ref<TResult>()));
 
-      std::string skippedIn = in;
+      tanuki::String skippedIn = in;
 
       int start;
 
@@ -136,13 +140,13 @@ class Rule : public Matchable<TResult> {
       auto collected = ref->collect(skippedIn);
 
       if (collected.second) {
-          try {
-            result = rule->resolve_collect<TRestRef..., typename TRef::TDeepType>(
-                skippedIn.substr(collected.first), initialSize, rest...,
-                collected.second);
-          } catch (NoExecuteDefinition&) {
-            throw;
-          }
+        try {
+          result = rule->resolve_collect<TRestRef..., typename TRef::TDeepType>(
+              skippedIn.substr(collected.first), initialSize, rest...,
+              collected.second);
+        } catch (NoExecuteDefinition&) {
+          throw;
+        }
       }
 
       return result;
@@ -152,8 +156,9 @@ class Rule : public Matchable<TResult> {
   template <typename TRef, typename... TRestRef>
   struct IsNullCallbackCollect {
     tanuki::Collect<TResult> operator()(Rule<TResult, TRefs...>* rule,
-                                        const std::string& in, int initialSize,
-                                        TRef, TRestRef... rest) {
+                                        const tanuki::String& in,
+                                        int initialSize, TRef,
+                                        TRestRef... rest) {
       tanuki::Collect<TResult> result;
 
       if (rule->m_callbackByExpansion) {
@@ -172,18 +177,18 @@ class Rule : public Matchable<TResult> {
   };
 
   static tanuki::ref<TResult> static_resolve(Rule<TResult, TRefs...>* rule,
-                                             const std::string& in,
+                                             const tanuki::String& in,
                                              TRefs... refs) {
     return rule->resolve(in, refs..., nullptr);
   }
 
   static tanuki::Collect<TResult> static_resolve_collect(
-      Rule<TResult, TRefs...>* rule, const std::string& in, TRefs... refs) {
+      Rule<TResult, TRefs...>* rule, const tanuki::String& in, TRefs... refs) {
     return rule->resolve_collect(in, in.size(), refs..., nullptr);
   }
 
   template <typename TRef, typename... TRestRef>
-  tanuki::ref<TResult> resolve(const std::string& in, TRef ref,
+  tanuki::ref<TResult> resolve(const tanuki::String& in, TRef ref,
                                TRestRef... rest) {
     return
         typename if_<std::is_same<TRef, std::nullptr_t>::value,
@@ -193,7 +198,7 @@ class Rule : public Matchable<TResult> {
   }
 
   template <typename TRef, typename... TRestRef>
-  tanuki::Collect<TResult> resolve_collect(const std::string& in,
+  tanuki::Collect<TResult> resolve_collect(const tanuki::String& in,
                                            int initialSize, TRef ref,
                                            TRestRef... rest) {
     return typename if_<
@@ -208,7 +213,7 @@ class Rule : public Matchable<TResult> {
       m_callbackByExpansion;
   std::function<ref<TResult>(std::tuple<typename TRefs::TDeepType...>)>
       m_callbackByTuple;
-  std::tuple<Rule<TResult, TRefs...>*, std::string, TRefs...> m_refs;
-  tanuki::ref<Fragment<TResult>> m_context;
+  std::tuple<Rule<TResult, TRefs...>*, tanuki::String, TRefs...> m_refs;
+  Fragment<TResult>* m_context;
 };
 }

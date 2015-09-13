@@ -6,6 +6,9 @@
 
 #include "exception.h"
 
+#include <iostream>
+#include <typeinfo>
+
 namespace tanuki {
 
 #define ref_friend_operator(type, op) \
@@ -135,10 +138,12 @@ class ref {
     unsigned int count;
   };
 
- public:
-  ref() : m_intern(nullptr) {}
+  enum State : char { normal = 0, master = 1, slave = 2 };
 
-  ref(TOn *on) {
+ public:
+  ref() : m_intern(nullptr), m_state(normal) {}
+
+  ref(TOn *on) : m_state(normal) {
     this->m_intern = new Intern();
 
     this->m_intern->on = on;
@@ -146,19 +151,28 @@ class ref {
   }
 
   ref(const ref<TOn> &other) : m_intern(other.m_intern) {
+    this->m_state = (other.m_state == master ? slave : normal);
+
     if (!isNull()) {
       this->m_intern->count++;
     }
   }
+
   ref(ref<TOn> &&other) : m_intern(other.m_intern) {
+    this->m_state = (other.m_state == master ? slave : normal);
+
     if (!isNull()) {
       this->m_intern->count++;
     }
   }
+
   ref<TOn> &operator=(const ref<TOn> &other) {
+    this->m_state = (other.m_state == master ? slave : normal);
+
     if (isNull()) {
       if (!other.isNull()) {
         this->m_intern = other.m_intern;
+
         this->m_intern->count++;
       }
     } else {
@@ -182,13 +196,13 @@ class ref {
     return *this;
   }
 
-  ~ref() {
-    if (!isNull()) {
+  virtual ~ref() {
+    if (m_state != slave && !isNull()) {
       m_intern->count--;
-      if (m_intern->count == 0) {
+
+      if ((m_intern->count == 0) || (m_state == master)) {
         delete m_intern->on;
         delete m_intern;
-        m_intern = nullptr;
       }
     }
   }
@@ -198,6 +212,7 @@ class ref {
   TOn *release() {
     TOn *res = m_intern->on;
     this->m_intern = nullptr;
+
     return res;
   }
 
@@ -208,6 +223,7 @@ class ref {
 
  private:
   Intern *m_intern;
+  State m_state;
 
   ref_friend_all_operator(int);
   ref_friend_all_operator(float);
@@ -220,6 +236,9 @@ class ref {
 
   template <typename T>
   friend undirect_ref<T> autoref(T *);
+
+  template <typename T>
+  friend void master(undirect_ref<T> &);
 };
 
 template <typename TOn>
@@ -284,6 +303,11 @@ undirect_ref<T> autoref(T *data) {
   result.m_intern->count++;
 
   return result;
+}
+
+template <typename T>
+void master(undirect_ref<T> &ref) {
+  ref.m_state = tanuki::ref<T>::State::master;
 }
 
 template <typename TReturn>

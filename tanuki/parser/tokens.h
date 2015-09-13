@@ -58,8 +58,8 @@ class WordToken;
 template <typename TReturn>
 class Token {
  public:
-  virtual ref<TReturn> match(const std::string &in) = 0;
-  virtual Collect<TReturn> collect(const std::string &in) = 0;
+  virtual ref<TReturn> match(const tanuki::String &in) = 0;
+  virtual Collect<TReturn> collect(const tanuki::String &in) = 0;
   virtual bool greedy() { return true; }
   virtual bool stopAtFirstGreedyFail() { return true; }
   virtual int exactSize() { return -1; }
@@ -74,8 +74,8 @@ class Token {
 class ConstantToken : public Token<std::string> {
  public:
   explicit ConstantToken(const std::string &constant);
-  ref<std::string> match(const std::string &in) override;
-  Collect<std::string> collect(const std::string &in) override;
+  ref<std::string> match(const tanuki::String &in) override;
+  Collect<std::string> collect(const tanuki::String &in) override;
   bool greedy() override { return false; }
   int exactSize() override { return m_constant.size(); }
 
@@ -89,8 +89,8 @@ class ConstantToken : public Token<std::string> {
 class CharToken : public Token<char> {
  public:
   explicit CharToken(char character);
-  ref<char> match(const std::string &in) override;
-  Collect<char> collect(const std::string &in) override;
+  ref<char> match(const tanuki::String &in) override;
+  Collect<char> collect(const tanuki::String &in) override;
   bool greedy() override { return false; }
   int exactSize() override { return 1; }
 
@@ -104,8 +104,8 @@ class CharToken : public Token<char> {
 class IntegerToken : public Token<int> {
  public:
   explicit IntegerToken();
-  ref<int> match(const std::string &in) override;
-  Collect<int> collect(const std::string &in) override;
+  ref<int> match(const tanuki::String &in) override;
+  Collect<int> collect(const tanuki::String &in) override;
 
  private:
   int m_result;
@@ -116,8 +116,8 @@ class AnyOfToken : public Token<char> {
   explicit AnyOfToken(std::vector<char> initial);
   explicit AnyOfToken();
   void validate(char character);
-  ref<char> match(const std::string &in) override;
-  Collect<char> collect(const std::string &in) override;
+  ref<char> match(const tanuki::String &in) override;
+  Collect<char> collect(const tanuki::String &in) override;
 
  private:
   bool m_intern[CHAR_MAX];
@@ -126,8 +126,8 @@ class AnyOfToken : public Token<char> {
 class AnyInToken : public Token<char> {
  public:
   explicit AnyInToken(char inferiorBound, char superiorBound);
-  ref<char> match(const std::string &in) override;
-  Collect<char> collect(const std::string &in) override;
+  ref<char> match(const tanuki::String &in) override;
+  Collect<char> collect(const tanuki::String &in) override;
 
  private:
   char m_inferiorBound;
@@ -157,8 +157,8 @@ template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class NotToken : public UnaryToken<TToken, std::string> {
  public:
   explicit NotToken(undirect_ref<TToken> token);
-  ref<std::string> match(const std::string &in) override;
-  Collect<std::string> collect(const std::string &in) override;
+  ref<std::string> match(const tanuki::String &in) override;
+  Collect<std::string> collect(const tanuki::String &in) override;
 };
 
 /**
@@ -169,8 +169,8 @@ template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class PlusToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
   explicit PlusToken(undirect_ref<TToken> token);
-  ref<std::vector<ref<TReturn>>> match(const std::string &in) override;
-  Collect<std::vector<ref<TReturn>>> collect(const std::string &in) override;
+  ref<std::vector<ref<TReturn>>> match(const tanuki::String &in) override;
+  Collect<std::vector<ref<TReturn>>> collect(const tanuki::String &in) override;
   bool stopAtFirstGreedyFail() override { return false; }
 };
 
@@ -182,8 +182,8 @@ template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class StarToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
   explicit StarToken(undirect_ref<TToken> token);
-  ref<std::vector<ref<TReturn>>> match(const std::string &in) override;
-  Collect<std::vector<ref<TReturn>>> collect(const std::string &in) override;
+  ref<std::vector<ref<TReturn>>> match(const tanuki::String &in) override;
+  Collect<std::vector<ref<TReturn>>> collect(const tanuki::String &in) override;
   bool stopAtFirstGreedyFail() override { return false; }
 
  private:
@@ -197,8 +197,8 @@ template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class OptionalToken : public UnaryToken<TToken, std::vector<ref<TReturn>>> {
  public:
   explicit OptionalToken(undirect_ref<TToken> inner);
-  ref<std::vector<ref<TReturn>>> match(const std::string &in) override;
-  Collect<std::vector<ref<TReturn>>> collect(const std::string &in) override;
+  ref<std::vector<ref<TReturn>>> match(const tanuki::String &in) override;
+  Collect<std::vector<ref<TReturn>>> collect(const tanuki::String &in) override;
 };
 
 /**
@@ -208,8 +208,8 @@ template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class StartWithToken : public UnaryToken<TToken, TReturn> {
  public:
   explicit StartWithToken(undirect_ref<TToken> inner);
-  ref<TReturn> match(const std::string &in) override;
-  Collect<TReturn> collect(const std::string &in) override;
+  ref<TReturn> match(const tanuki::String &in) override;
+  Collect<TReturn> collect(const tanuki::String &in) override;
 };
 
 /**
@@ -219,8 +219,8 @@ template <typename TToken, typename TReturn = typename TToken::TReturnType>
 class EndWithToken : public UnaryToken<TToken, TReturn> {
  public:
   explicit EndWithToken(undirect_ref<TToken> inner);
-  ref<TReturn> match(const std::string &in) override;
-  Collect<TReturn> collect(const std::string &in) override;
+  ref<TReturn> match(const tanuki::String &in) override;
+  Collect<TReturn> collect(const tanuki::String &in) override;
 };
 
 /**
@@ -249,8 +249,8 @@ template <typename TLeft, typename TRight,
 class OrToken : public BinaryToken<TLeft, TRight, TReturn> {
  public:
   explicit OrToken(ref<TLeft> left, ref<TRight> right);
-  ref<TReturn> match(const std::string &in) override;
-  Collect<TReturn> collect(const std::string &in) override;
+  ref<TReturn> match(const tanuki::String &in) override;
+  Collect<TReturn> collect(const tanuki::String &in) override;
 };
 
 /**
@@ -261,8 +261,8 @@ template <typename TLeft, typename TRight,
 class AndToken : public BinaryToken<TLeft, TRight, TReturn> {
  public:
   explicit AndToken(ref<TLeft> left, ref<TRight> right);
-  ref<TReturn> match(const std::string &in) override;
-  Collect<TReturn> collect(const std::string &in) override;
+  ref<TReturn> match(const tanuki::String &in) override;
+  Collect<TReturn> collect(const tanuki::String &in) override;
 };
 
 /**
@@ -272,8 +272,8 @@ template <typename TLeft, typename TRight>
 class RangeToken : public Token<std::string> {
  public:
   explicit RangeToken(undirect_ref<TLeft> left, undirect_ref<TRight> right);
-  ref<std::string> match(const std::string &in) override;
-  Collect<std::string> collect(const std::string &in) override;
+  ref<std::string> match(const tanuki::String &in) override;
+  Collect<std::string> collect(const tanuki::String &in) override;
 
  private:
   undirect_ref<StartWithToken<TLeft>> m_left;
@@ -283,8 +283,8 @@ class RangeToken : public Token<std::string> {
 class WordToken : public Token<std::string> {
  public:
   explicit WordToken(Token<char> *inner);
-  ref<std::string> match(const std::string &in) override;
-  Collect<std::string> collect(const std::string &in) override;
+  ref<std::string> match(const tanuki::String &in) override;
+  Collect<std::string> collect(const tanuki::String &in) override;
 
  private:
   undirect_ref<PlusToken<Token<char>, char>> m_inner;
@@ -301,20 +301,20 @@ NotToken<TToken, TReturn>::NotToken(undirect_ref<TToken> token)
     : UnaryToken<TToken, TReturn>(token) {}
 
 template <typename TToken, typename TReturn>
-ref<std::string> NotToken<TToken, TReturn>::match(const std::string &in) {
+ref<std::string> NotToken<TToken, TReturn>::match(const tanuki::String &in) {
   if (UnaryToken<TToken, TReturn>::token()->match(in)) {
     return ref<std::string>();
   } else {
-    return ref<std::string>(new std::string(in));
+    return ref<std::string>(new std::string(in.toStdString()));
   }
 }
 
 template <typename TToken, typename TReturn>
-Collect<std::string> NotToken<TToken, TReturn>::collect(const std::string &in) {
+Collect<std::string> NotToken<TToken, TReturn>::collect(const tanuki::String &in) {
   Collect<TReturn> result(UnaryToken<TToken, TReturn>::token()->collect(in));
 
   if (result.second) {
-    return std::make_pair(result.first, ref<std::string>(new std::string(in)));
+    return std::make_pair(result.first, ref<std::string>(new std::string(in.toStdString())));
   } else {
     return std::make_pair(0, ref<std::string>());
   }
@@ -326,7 +326,7 @@ PlusToken<TToken, TReturn>::PlusToken(undirect_ref<TToken> token)
 
 template <typename TToken, typename TReturn>
 ref<std::vector<ref<TReturn>>> PlusToken<TToken, TReturn>::match(
-    const std::string &in) {
+    const tanuki::String &in) {
   if (in.empty()) {
     return ref<std::vector<ref<TReturn>>>();
   }
@@ -338,10 +338,8 @@ ref<std::vector<ref<TReturn>>> PlusToken<TToken, TReturn>::match(
   ref<std::vector<ref<TReturn>>> result(new std::vector<ref<TReturn>>());
 
   while (current < length) {
-    std::string buffer = in.substr(current);
-
     Collect<TReturn> currentRes =
-        UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(buffer);
+        UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(in.substr(current));
 
     if (currentRes.second) {
       current += currentRes.first;
@@ -361,7 +359,7 @@ ref<std::vector<ref<TReturn>>> PlusToken<TToken, TReturn>::match(
 
 template <typename TToken, typename TReturn>
 Collect<std::vector<ref<TReturn>>> PlusToken<TToken, TReturn>::collect(
-    const std::string &in) {
+    const tanuki::String &in) {
   if (in.empty()) {
     return std::make_pair(0, ref<std::vector<ref<TReturn>>>());
   }
@@ -372,10 +370,8 @@ Collect<std::vector<ref<TReturn>>> PlusToken<TToken, TReturn>::collect(
   ref<std::vector<ref<TReturn>>> result(new std::vector<ref<TReturn>>());
 
   while (current < length) {
-    std::string buffer = in.substr(current);
-
     Collect<TReturn> currentRes =
-        UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(buffer);
+        UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(in.substr(current));
 
     if (currentRes.second) {
       current += currentRes.first;
@@ -398,7 +394,7 @@ StarToken<TToken, TReturn>::StarToken(undirect_ref<TToken> token)
 
 template <typename TToken, typename TReturn>
 ref<std::vector<ref<TReturn>>> StarToken<TToken, TReturn>::match(
-    const std::string &in) {
+    const tanuki::String &in) {
   ref<std::vector<ref<TReturn>>> result = (m_inner->match(in));
 
   if (result) {
@@ -410,7 +406,7 @@ ref<std::vector<ref<TReturn>>> StarToken<TToken, TReturn>::match(
 
 template <typename TToken, typename TReturn>
 Collect<std::vector<ref<TReturn>>> StarToken<TToken, TReturn>::collect(
-    const std::string &in) {
+    const tanuki::String &in) {
   Collect<std::vector<ref<TReturn>>> result = (m_inner->collect(in));
 
   if (result.second) {
@@ -427,7 +423,7 @@ OptionalToken<TToken, TReturn>::OptionalToken(undirect_ref<TToken> token)
 
 template <typename TToken, typename TReturn>
 ref<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::match(
-    const std::string &in) {
+    const tanuki::String &in) {
   if (in.empty()) {
     return ref<std::vector<ref<TReturn>>>(new std::vector<ref<TReturn>>());
   }
@@ -468,7 +464,7 @@ ref<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::match(
 
 template <typename TToken, typename TReturn>
 Collect<std::vector<ref<TReturn>>> OptionalToken<TToken, TReturn>::collect(
-    const std::string &in) {
+    const tanuki::String &in) {
   Collect<TReturn> result =
       UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(in);
 
@@ -486,7 +482,7 @@ StartWithToken<TToken, TReturn>::StartWithToken(undirect_ref<TToken> token)
     : UnaryToken<TToken, TReturn>(token) {}
 
 template <typename TToken, typename TReturn>
-ref<TReturn> StartWithToken<TToken, TReturn>::match(const std::string &in) {
+ref<TReturn> StartWithToken<TToken, TReturn>::match(const tanuki::String &in) {
   Collect<TReturn> result = UnaryToken<TToken, TReturn>::token()->collect(in);
 
   if (result.second) {
@@ -498,7 +494,7 @@ ref<TReturn> StartWithToken<TToken, TReturn>::match(const std::string &in) {
 
 template <typename TToken, typename TReturn>
 Collect<TReturn> StartWithToken<TToken, TReturn>::collect(
-    const std::string &in) {
+    const tanuki::String &in) {
   Collect<TReturn> result = UnaryToken<TToken, TReturn>::token()->collect(in);
 
   if (result.second) {
@@ -513,7 +509,7 @@ EndWithToken<TToken, TReturn>::EndWithToken(undirect_ref<TToken> token)
     : UnaryToken<TToken, TReturn>(token) {}
 
 template <typename TToken, typename TReturn>
-ref<TReturn> EndWithToken<TToken, TReturn>::match(const std::string &in) {
+ref<TReturn> EndWithToken<TToken, TReturn>::match(const tanuki::String &in) {
   if (in.empty()) {
     return ref<TReturn>();
   }
@@ -539,9 +535,8 @@ ref<TReturn> EndWithToken<TToken, TReturn>::match(const std::string &in) {
 
     do {
       length--;
-      std::string buffer = in.substr(length);
 
-      result = UnaryToken<TToken, TReturn>::token()->match(buffer);
+      result = UnaryToken<TToken, TReturn>::token()->match(in.substr(length));
 
       if (result) {
         break;
@@ -569,8 +564,8 @@ ref<TReturn> EndWithToken<TToken, TReturn>::match(const std::string &in) {
 }
 
 template <typename TToken, typename TReturn>
-Collect<TReturn> EndWithToken<TToken, TReturn>::collect(const std::string &in) {
-  int length = in.length();
+Collect<TReturn> EndWithToken<TToken, TReturn>::collect(const tanuki::String &in) {
+  int length = in.size();
   Collect<TReturn> result = std::make_pair(0, ref<TReturn>());
 
   for (int i = 0; i < length; i++) {
@@ -596,7 +591,7 @@ OrToken<TLeft, TRight, TReturn>::OrToken(ref<TLeft> left, ref<TRight> right)
     : BinaryToken<TLeft, TRight, TReturn>(left, right) {}
 
 template <typename TLeft, typename TRight, typename TReturn>
-ref<TReturn> OrToken<TLeft, TRight, TReturn>::match(const std::string &in) {
+ref<TReturn> OrToken<TLeft, TRight, TReturn>::match(const tanuki::String &in) {
   ref<TReturn> leftResult =
       (BinaryToken<TLeft, TRight, TReturn>::left()->match(in));
 
@@ -616,7 +611,7 @@ ref<TReturn> OrToken<TLeft, TRight, TReturn>::match(const std::string &in) {
 
 template <typename TLeft, typename TRight, typename TReturn>
 Collect<TReturn> OrToken<TLeft, TRight, TReturn>::collect(
-    const std::string &in) {
+    const tanuki::String &in) {
   Collect<TReturn> leftResult =
       (BinaryToken<TLeft, TRight, TReturn>::left()->collect(in));
 
@@ -639,7 +634,7 @@ AndToken<TLeft, TRight, TReturn>::AndToken(ref<TLeft> left, ref<TRight> right)
     : BinaryToken<TLeft, TRight, TReturn>(left, right) {}
 
 template <typename TLeft, typename TRight, typename TReturn>
-ref<TReturn> AndToken<TLeft, TRight, TReturn>::match(const std::string &in) {
+ref<TReturn> AndToken<TLeft, TRight, TReturn>::match(const tanuki::String &in) {
   ref<TReturn> leftResult =
       BinaryToken<TLeft, TRight, TReturn>::left()->match(in);
   ref<TReturn> rightResult =
@@ -654,7 +649,7 @@ ref<TReturn> AndToken<TLeft, TRight, TReturn>::match(const std::string &in) {
 
 template <typename TLeft, typename TRight, typename TReturn>
 Collect<TReturn> AndToken<TLeft, TRight, TReturn>::collect(
-    const std::string &in) {
+    const tanuki::String &in) {
   Collect<TReturn> leftResult =
       (BinaryToken<TLeft, TRight, TReturn>::left()->collect(in));
 
@@ -678,12 +673,12 @@ RangeToken<TLeft, TRight>::RangeToken(undirect_ref<TLeft> left,
     : Token<std::string>(), m_left(startWith(left)), m_right(endWith(right)) {}
 
 template <typename TLeft, typename TRight>
-ref<std::string> RangeToken<TLeft, TRight>::match(const std::string &in) {
+ref<std::string> RangeToken<TLeft, TRight>::match(const tanuki::String &in) {
   ref<std::string> result;
 
   if (m_left->match(in)) {
     if (m_right->match(in)) {
-      result = ref<std::string>(new std::string(in));
+      result = ref<std::string>(new std::string(in.toStdString()));
     }
   }
 
@@ -691,7 +686,7 @@ ref<std::string> RangeToken<TLeft, TRight>::match(const std::string &in) {
 }
 
 template <typename TLeft, typename TRight>
-Collect<std::string> RangeToken<TLeft, TRight>::collect(const std::string &in) {
+Collect<std::string> RangeToken<TLeft, TRight>::collect(const tanuki::String &in) {
   Collect<std::string> result = std::make_pair(0, ref<std::string>());
 
   if (m_left->collect(in).second) {
@@ -700,7 +695,7 @@ Collect<std::string> RangeToken<TLeft, TRight>::collect(const std::string &in) {
     if (right.second) {
       result = std::make_pair(
           right.first,
-          ref<std::string>(new std::string(in.substr(right.first))));
+          ref<std::string>(new std::string(in.substr(right.first).toStdString())));
     }
   }
 

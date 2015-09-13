@@ -240,6 +240,7 @@ void testGrammarSimple() {
   use_tanuki;
 
   undirect_ref<Fragment<int>> mainFragment = fragment<int>();
+  master(mainFragment);
 
   mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
     return (i + j);
@@ -262,7 +263,7 @@ void testGrammarSimple() {
   tanuki_result_expect(20, mainFragment->match("15+5"), "Simple great add");
   tanuki_result_expect(-10, mainFragment->match("5-15"), "Simple great less");
   tanuki_result_expect(2500, mainFragment->match("50*50"), "Simple great mult");
-  tanuki_result_expect(10, mainFragment->match("500/50"), "Simple greatdivide");
+  tanuki_result_expect(10, mainFragment->match("500/50"), "Simple great divide");
 
   mainFragment->skip(blank());
 
@@ -324,7 +325,7 @@ void testGrammarFunny() {
 
   class Operator : public tanuki::Token<OperatorReturnType> {
    public:
-    ref<OperatorReturnType> match(const std::string& in) {
+    ref<OperatorReturnType> match(const tanuki::String& in) {
       if (in.size() == 1) {
         if (in[0] == '+') {
           return ref<OperatorReturnType>(new OperatorReturnType(
@@ -346,7 +347,7 @@ void testGrammarFunny() {
       }
     }
 
-    tanuki::Collect<OperatorReturnType> collect(const std::string& in) {
+    tanuki::Collect<OperatorReturnType> collect(const tanuki::String& in) {
       if (in.empty()) {
         return std::make_pair(0, ref<OperatorReturnType>());
       } else {
@@ -378,6 +379,7 @@ void testGrammarFunny() {
   };
 
   undirect_ref<Fragment<int>> mainFragment = fragment<int>();
+  master(mainFragment);
 
   mainFragment->handle([](ref<int> x, ref<OperatorReturnType> op, ref<int> y) {
     return op->operator()(x, y);
@@ -404,6 +406,7 @@ void testGrammarWithOperator() {
   use_tanuki;
 
   undirect_ref<Fragment<int>> mainFragment = fragment<int>();
+  master(mainFragment);
 
   mainFragment->handle([](ref<int> i, ref<std::string>, ref<char>)
                            -> ref<int> { return (i + 1); },
@@ -411,7 +414,6 @@ void testGrammarWithOperator() {
   mainFragment->handle([](ref<char>, ref<std::vector<ref<int>>> in,
                           ref<char>) -> ref<int> { return in->back(); },
                        constant('{'), +mainFragment, constant('}'));
-
   tanuki_result_expect(6, mainFragment->match("5++;"), "Simple incr");
   tanuki_result_expect(10, mainFragment->match("{5++;9++;}"), "Double incr");
   tanuki_result_expect(25, mainFragment->match("{1++;2++;3++;4++;24++;}"),
