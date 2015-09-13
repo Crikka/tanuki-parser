@@ -19,8 +19,8 @@ undirect_ref<AnyInToken> letter();
 undirect_ref<AnyOfToken> anyOf(char c);
 
 template <typename TToken>
-undirect_ref<WordToken> word(TToken inner) {
-    return undirect_ref<WordToken>(new WordToken(inner.release()));
+undirect_ref<WordToken<TToken>> word(undirect_ref<TToken> inner) {
+    return undirect_ref<WordToken<TToken>>(new WordToken<TToken>(inner));
 }
 
 template <typename TToken>

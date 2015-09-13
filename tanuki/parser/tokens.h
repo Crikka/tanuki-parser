@@ -48,6 +48,7 @@ template <typename, typename>
 class RangeToken;
 
 // Special
+template <typename>
 class WordToken;
 
 // ~~~~~~~~ Helper
@@ -280,14 +281,15 @@ class RangeToken : public Token<std::string> {
   undirect_ref<EndWithToken<TRight>> m_right;
 };
 
+template <typename TToken>
 class WordToken : public Token<std::string> {
  public:
-  explicit WordToken(Token<char> *inner);
+  explicit WordToken(undirect_ref<TToken> inner);
   ref<std::string> match(const tanuki::String &in) override;
   Collect<std::string> collect(const tanuki::String &in) override;
 
  private:
-  undirect_ref<PlusToken<Token<char>, char>> m_inner;
+  undirect_ref<PlusToken<TToken, typename TToken::TReturnType>> m_inner;
 };
 
 // ------ Method --------
@@ -310,11 +312,13 @@ ref<std::string> NotToken<TToken, TReturn>::match(const tanuki::String &in) {
 }
 
 template <typename TToken, typename TReturn>
-Collect<std::string> NotToken<TToken, TReturn>::collect(const tanuki::String &in) {
+Collect<std::string> NotToken<TToken, TReturn>::collect(
+    const tanuki::String &in) {
   Collect<TReturn> result(UnaryToken<TToken, TReturn>::token()->collect(in));
 
   if (result.second) {
-    return std::make_pair(result.first, ref<std::string>(new std::string(in.toStdString())));
+    return std::make_pair(result.first,
+                          ref<std::string>(new std::string(in.toStdString())));
   } else {
     return std::make_pair(0, ref<std::string>());
   }
@@ -339,7 +343,8 @@ ref<std::vector<ref<TReturn>>> PlusToken<TToken, TReturn>::match(
 
   while (current < length) {
     Collect<TReturn> currentRes =
-        UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(in.substr(current));
+        UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(
+            in.substr(current));
 
     if (currentRes.second) {
       current += currentRes.first;
@@ -371,7 +376,8 @@ Collect<std::vector<ref<TReturn>>> PlusToken<TToken, TReturn>::collect(
 
   while (current < length) {
     Collect<TReturn> currentRes =
-        UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(in.substr(current));
+        UnaryToken<TToken, std::vector<ref<TReturn>>>::token()->collect(
+            in.substr(current));
 
     if (currentRes.second) {
       current += currentRes.first;
@@ -564,7 +570,8 @@ ref<TReturn> EndWithToken<TToken, TReturn>::match(const tanuki::String &in) {
 }
 
 template <typename TToken, typename TReturn>
-Collect<TReturn> EndWithToken<TToken, TReturn>::collect(const tanuki::String &in) {
+Collect<TReturn> EndWithToken<TToken, TReturn>::collect(
+    const tanuki::String &in) {
   int length = in.size();
   Collect<TReturn> result = std::make_pair(0, ref<TReturn>());
 
@@ -686,19 +693,50 @@ ref<std::string> RangeToken<TLeft, TRight>::match(const tanuki::String &in) {
 }
 
 template <typename TLeft, typename TRight>
-Collect<std::string> RangeToken<TLeft, TRight>::collect(const tanuki::String &in) {
+Collect<std::string> RangeToken<TLeft, TRight>::collect(
+    const tanuki::String &in) {
   Collect<std::string> result = std::make_pair(0, ref<std::string>());
 
   if (m_left->collect(in).second) {
     auto right = m_right->collect(in);
 
     if (right.second) {
-      result = std::make_pair(
-          right.first,
-          ref<std::string>(new std::string(in.substr(right.first).toStdString())));
+      result = std::make_pair(right.first,
+                              ref<std::string>(new std::string(
+                                  in.substr(right.first).toStdString())));
     }
   }
 
   return result;
+}
+
+template <typename TToken>
+WordToken<TToken>::WordToken(undirect_ref<TToken> inner)
+    : Token<std::string>(), m_inner(+inner) {}
+
+template <typename TToken>
+ref<std::string> WordToken<TToken>::match(const tanuki::String &in) {
+  ref<std::vector<ref<typename TToken::TReturnType>>> result(m_inner->match(in));
+
+  if (result) {
+    return ref<std::string>(new std::string(in.toStdString()));
+  } else {
+    return ref<std::string>();
+  }
+}
+
+template <typename TToken>
+Collect<std::string> WordToken<TToken>::collect(const tanuki::String &in) {
+  Collect<std::vector<ref<typename TToken::TReturnType>>> result(m_inner->collect(in));
+
+  if (result.second) {
+    int length = result.first;
+
+    return std::make_pair(
+        result.first,
+        ref<std::string>(new std::string(in.substr(0, length).toStdString())));
+  } else {
+    return std::make_pair(0, ref<std::string>());
+  }
 }
 }

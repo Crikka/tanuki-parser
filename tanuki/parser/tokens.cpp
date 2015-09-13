@@ -150,42 +150,4 @@ Collect<char> AnyInToken::collect(const tanuki::String &in) {
     }
   }
 }
-
-WordToken::WordToken(Token<char> *inner)
-    : Token<std::string>(), m_inner(+(undirect_ref<Token<char>>(inner))) {}
-
-ref<std::string> WordToken::match(const tanuki::String &in) {
-  ref<std::vector<ref<char>>> result(m_inner->match(in));
-
-  if (result) {
-    int length = result->size();
-    std::vector<char> buffer(length);
-
-    for (int i = 0; i < length; i++) {
-      buffer[i] = useOnce(result->at(i).release()).exposeValue();
-    }
-
-    return ref<std::string>(new std::string(buffer.begin(), buffer.end()));
-  } else {
-    return ref<std::string>();
-  }
-}
-
-Collect<std::string> WordToken::collect(const tanuki::String &in) {
-  Collect<std::vector<ref<char>>> result(m_inner->collect(in));
-
-  if (result.second) {
-    int length = result.second->size();
-    std::vector<char> buffer(length);
-
-    for (int i = 0; i < length; i++) {
-      buffer[i] = useOnce(result.second->at(i).release()).exposeValue();
-    }
-
-    return std::make_pair(result.first, ref<std::string>(new std::string(
-                                            buffer.begin(), buffer.end())));
-  } else {
-    return std::make_pair(0, ref<std::string>());
-  }
-}
 }
