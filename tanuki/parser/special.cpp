@@ -27,11 +27,11 @@ undirect_ref<CharToken> tab() {
   return constant('\t');
 }
 
-undirect_ref<OrToken<CharToken, CharToken, char>> blank() {
+undirect_ref<OrToken<CharToken, CharToken>> blank() {
   return (space() or tab());
 }
 
-undirect_ref<OrToken<CharToken, CharToken, char>> lineTerminator() {
+undirect_ref<OrToken<CharToken, CharToken>> lineTerminator() {
   return (constant('\r') or constant('\n'));
 }
 

@@ -40,9 +40,9 @@ class EndWithToken;
 // Binary
 template <typename, typename, typename>
 class BinaryToken;
-template <typename, typename, typename>
+template <typename, typename>
 class OrToken;
-template <typename, typename, typename>
+template <typename, typename>
 class AndToken;
 template <typename, typename>
 class RangeToken;
@@ -245,25 +245,23 @@ class BinaryToken : public Token<TReturn> {
 /**
  * @brief The OrToken class
  */
-template <typename TLeft, typename TRight,
-          typename TReturn = typename TLeft::TReturnTypet>
-class OrToken : public BinaryToken<TLeft, TRight, TReturn> {
+template <typename TLeft, typename TRight>
+class OrToken : public BinaryToken<TLeft, TRight, std::string> {
  public:
   explicit OrToken(ref<TLeft> left, ref<TRight> right);
-  ref<TReturn> match(const tanuki::String &in) override;
-  Collect<TReturn> collect(const tanuki::String &in) override;
+  ref<std::string> match(const tanuki::String &in) override;
+  Collect<std::string> collect(const tanuki::String &in) override;
 };
 
 /**
  * @brief The AndToken class
  */
-template <typename TLeft, typename TRight,
-          typename TReturn = typename TLeft::TReturnType>
-class AndToken : public BinaryToken<TLeft, TRight, TReturn> {
+template <typename TLeft, typename TRight>
+class AndToken : public BinaryToken<TLeft, TRight, std::string> {
  public:
   explicit AndToken(ref<TLeft> left, ref<TRight> right);
-  ref<TReturn> match(const tanuki::String &in) override;
-  Collect<TReturn> collect(const tanuki::String &in) override;
+  ref<std::string> match(const tanuki::String &in) override;
+  Collect<std::string> collect(const tanuki::String &in) override;
 };
 
 /**
@@ -300,11 +298,11 @@ UnaryToken<TToken, TReturn>::UnaryToken(undirect_ref<TToken> token)
 
 template <typename TToken, typename TReturn>
 NotToken<TToken, TReturn>::NotToken(undirect_ref<TToken> token)
-    : UnaryToken<TToken, TReturn>(token) {}
+    : UnaryToken<TToken, std::string>(token) {}
 
 template <typename TToken, typename TReturn>
 ref<std::string> NotToken<TToken, TReturn>::match(const tanuki::String &in) {
-  if (UnaryToken<TToken, TReturn>::token()->match(in)) {
+  if (UnaryToken<TToken, std::string>::token()->match(in)) {
     return ref<std::string>();
   } else {
     return ref<std::string>(new std::string(in.toStdString()));
@@ -314,7 +312,8 @@ ref<std::string> NotToken<TToken, TReturn>::match(const tanuki::String &in) {
 template <typename TToken, typename TReturn>
 Collect<std::string> NotToken<TToken, TReturn>::collect(
     const tanuki::String &in) {
-  Collect<TReturn> result(UnaryToken<TToken, TReturn>::token()->collect(in));
+  Collect<TReturn> result(
+      UnaryToken<TToken, std::string>::token()->collect(in));
 
   if (result.second) {
     return std::make_pair(result.first,
@@ -593,84 +592,99 @@ BinaryToken<TLeft, TRight, TReturn>::BinaryToken(ref<TLeft> left,
                                                  ref<TRight> right)
     : Token<TReturn>(), m_left(left), m_right(right) {}
 
-template <typename TLeft, typename TRight, typename TReturn>
-OrToken<TLeft, TRight, TReturn>::OrToken(ref<TLeft> left, ref<TRight> right)
-    : BinaryToken<TLeft, TRight, TReturn>(left, right) {}
+template <typename TLeft, typename TRight>
+OrToken<TLeft, TRight>::OrToken(ref<TLeft> left, ref<TRight> right)
+    : BinaryToken<TLeft, TRight, std::string>(left, right) {}
 
-template <typename TLeft, typename TRight, typename TReturn>
-ref<TReturn> OrToken<TLeft, TRight, TReturn>::match(const tanuki::String &in) {
-  ref<TReturn> leftResult =
-      (BinaryToken<TLeft, TRight, TReturn>::left()->match(in));
+template <typename TLeft, typename TRight>
+ref<std::string> OrToken<TLeft, TRight>::match(const tanuki::String &in) {
+  ref<typename TLeft::TReturnType> leftResult =
+      (BinaryToken<TLeft, TRight, std::string>::left()->match(in));
 
-  if (!leftResult.isNull()) {
-    return leftResult;
+  if (leftResult) {
+    return ref<std::string>(new std::string(in.toStdString()));
   } else {
-    ref<TReturn> rightResult =
-        (BinaryToken<TLeft, TRight, TReturn>::right()->match(in));
+    ref<typename TRight::TReturnType> rightResult =
+        (BinaryToken<TLeft, TRight, std::string>::right()->match(in));
 
-    if (!rightResult.isNull()) {
-      return rightResult;
+    if (rightResult) {
+      return ref<std::string>(new std::string(in.toStdString()));
     } else {
-      return ref<TReturn>();
+      return ref<std::string>();
     }
   }
 }
 
-template <typename TLeft, typename TRight, typename TReturn>
-Collect<TReturn> OrToken<TLeft, TRight, TReturn>::collect(
-    const tanuki::String &in) {
-  Collect<TReturn> leftResult =
-      (BinaryToken<TLeft, TRight, TReturn>::left()->collect(in));
+template <typename TLeft, typename TRight>
+Collect<std::string> OrToken<TLeft, TRight>::collect(const tanuki::String &in) {
+  Collect<typename TLeft::TReturnType> leftResult =
+      (BinaryToken<TLeft, TRight, std::string>::left()->collect(in));
 
   if (leftResult.second) {
-    return leftResult;
+    return std::make_pair(leftResult.first,
+                          ref<std::string>(new std::string(
+                              in.substr(0, leftResult.first).toStdString())));
   } else {
-    Collect<TReturn> rightResult =
-        (BinaryToken<TLeft, TRight, TReturn>::right()->collect(in));
+    Collect<typename TRight::TReturnType> rightResult =
+        (BinaryToken<TLeft, TRight, std::string>::right()->collect(in));
 
     if (rightResult.second) {
-      return rightResult;
+      return std::make_pair(
+          rightResult.first,
+          ref<std::string>(
+              new std::string(in.substr(0, rightResult.first).toStdString())));
     } else {
-      return std::make_pair(0, ref<TReturn>());
+      return std::make_pair(0, ref<std::string>());
     }
   }
 }
 
-template <typename TLeft, typename TRight, typename TReturn>
-AndToken<TLeft, TRight, TReturn>::AndToken(ref<TLeft> left, ref<TRight> right)
-    : BinaryToken<TLeft, TRight, TReturn>(left, right) {}
+template <typename TLeft, typename TRight>
+AndToken<TLeft, TRight>::AndToken(ref<TLeft> left, ref<TRight> right)
+    : BinaryToken<TLeft, TRight, std::string>(left, right) {}
 
-template <typename TLeft, typename TRight, typename TReturn>
-ref<TReturn> AndToken<TLeft, TRight, TReturn>::match(const tanuki::String &in) {
-  ref<TReturn> leftResult =
-      BinaryToken<TLeft, TRight, TReturn>::left()->match(in);
-  ref<TReturn> rightResult =
-      BinaryToken<TLeft, TRight, TReturn>::right()->match(in);
+template <typename TLeft, typename TRight>
+ref<std::string> AndToken<TLeft, TRight>::match(const tanuki::String &in) {
+  ref<typename TLeft::TReturnType> leftResult =
+      BinaryToken<TLeft, TRight, std::string>::left()->match(in);
 
-  if (!leftResult.isNull() && !rightResult.isNull()) {
-    return leftResult;
+  if (leftResult) {
+    ref<typename TRight::TReturnType> rightResult =
+        BinaryToken<TLeft, TRight, std::string>::right()->match(in);
+
+    if (rightResult) {
+      return ref<std::string>(new std::string(in.toStdString()));
+    } else {
+      return ref<std::string>();
+    }
   } else {
-    return ref<TReturn>();
+    return ref<std::string>();
   }
 }
 
-template <typename TLeft, typename TRight, typename TReturn>
-Collect<TReturn> AndToken<TLeft, TRight, TReturn>::collect(
+template <typename TLeft, typename TRight>
+Collect<std::string> AndToken<TLeft, TRight>::collect(
     const tanuki::String &in) {
-  Collect<TReturn> leftResult =
-      (BinaryToken<TLeft, TRight, TReturn>::left()->collect(in));
+  Collect<typename TLeft::TReturnType> leftResult =
+      (BinaryToken<TLeft, TRight, std::string>::left()->collect(in));
 
   if (leftResult.second) {
-    Collect<TReturn> rightResult =
-        (BinaryToken<TLeft, TRight, TReturn>::right()->collect(in));
+    Collect<typename TRight::TReturnType> rightResult =
+        (BinaryToken<TLeft, TRight, std::string>::right()->collect(in));
 
     if (rightResult.second) {
-      return leftResult;
+      if (leftResult.first == rightResult.first) {
+        return std::make_pair(
+            leftResult.first,
+            new std::string(in.substr(0, rightResult.first).toStdString()));
+      } else {
+        return std::make_pair(0, ref<std::string>());
+      }
     } else {
-      return std::make_pair(0, ref<TReturn>());
+      return std::make_pair(0, ref<std::string>());
     }
   } else {
-    return std::make_pair(0, ref<TReturn>());
+    return std::make_pair(0, ref<std::string>());
   }
 }
 
@@ -716,7 +730,8 @@ WordToken<TToken>::WordToken(undirect_ref<TToken> inner)
 
 template <typename TToken>
 ref<std::string> WordToken<TToken>::match(const tanuki::String &in) {
-  ref<std::vector<ref<typename TToken::TReturnType>>> result(m_inner->match(in));
+  ref<std::vector<ref<typename TToken::TReturnType>>> result(
+      m_inner->match(in));
 
   if (result) {
     return ref<std::string>(new std::string(in.toStdString()));
@@ -727,7 +742,8 @@ ref<std::string> WordToken<TToken>::match(const tanuki::String &in) {
 
 template <typename TToken>
 Collect<std::string> WordToken<TToken>::collect(const tanuki::String &in) {
-  Collect<std::vector<ref<typename TToken::TReturnType>>> result(m_inner->collect(in));
+  Collect<std::vector<ref<typename TToken::TReturnType>>> result(
+      m_inner->collect(in));
 
   if (result.second) {
     int length = result.first;

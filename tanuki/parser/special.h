@@ -12,8 +12,8 @@ undirect_ref<AnyInToken> anyIn(char inferiorBound, char superiorBound);
 // Helper constants
 undirect_ref<CharToken> space();
 undirect_ref<CharToken> tab();
-undirect_ref<OrToken<CharToken, CharToken, char>> blank();
-undirect_ref<OrToken<CharToken, CharToken, char>> lineTerminator();
+undirect_ref<OrToken<CharToken, CharToken>> blank();
+undirect_ref<OrToken<CharToken, CharToken>> lineTerminator();
 undirect_ref<AnyInToken> digit();
 undirect_ref<AnyInToken> letter();
 undirect_ref<AnyOfToken> anyOf(char c);
