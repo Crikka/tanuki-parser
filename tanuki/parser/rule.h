@@ -17,6 +17,8 @@ class Matchable {
 
   virtual tanuki::ref<TResult> match(const tanuki::String&) = 0;
   virtual tanuki::Collect<TResult> collect(const tanuki::String&) = 0;
+
+  short weight;
 };
 
 template <typename TResult, typename... TRefs>

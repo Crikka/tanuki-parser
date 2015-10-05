@@ -25,48 +25,88 @@ class Fragment {
   void handle(std::function<ref<TResult>(
                   std::tuple<typename TRefs::TDeepType...>)> callback,
               TRefs... refs) {
-    m_rules.push_back(ref<Matchable<TResult>>(
-        new Rule<TResult, TRefs...>(this, refs..., callback)));
+    handle<TRefs...>(-1, callback, refs...);
+  }
+
+  template <typename... TRefs>
+  void handle(short weight,
+              std::function<ref<TResult>(
+                  std::tuple<typename TRefs::TDeepType...>)> callback,
+              TRefs... refs) {
+    Rule<TResult, TRefs...>* rule =
+        new Rule<TResult, TRefs...>(this, refs..., callback);
+
+    m_rules.push_back(ref<Matchable<TResult>>(rule));
+    rule->weight = weight;
   }
 
   template <typename... TRefs>
   void handle(
       std::function<ref<TResult>(typename TRefs::TDeepType...)> callback,
       TRefs... refs) {
-    m_rules.push_back(ref<Matchable<TResult>>(
-        new Rule<TResult, TRefs...>(this, refs..., callback)));
+    handle<TRefs...>(-1, callback, refs...);
+  }
+
+  template <typename... TRefs>
+  void handle(
+      short weight,
+      std::function<ref<TResult>(typename TRefs::TDeepType...)> callback,
+      TRefs... refs) {
+    Rule<TResult, TRefs...>* rule =
+        new Rule<TResult, TRefs...>(this, refs..., callback);
+
+    m_rules.push_back(ref<Matchable<TResult>>(rule));
+    rule->weight = weight;
   }
 
   tanuki::ref<TResult> match(const tanuki::String& input) {
+    tanuki::ref<TResult> result;
+    int lastWeight = 0;
+
     for (ref<Matchable<TResult>>& rule : m_rules) {
       try {
-        tanuki::ref<TResult> result = rule->match(input);
+        tanuki::ref<TResult> inner = rule->match(input);
 
-        if (!result.isNull()) {
-          return result;
+        if (!inner.isNull()) {
+          if (rule->weight == -1) {
+            result = inner;
+            break;
+          } else if (rule->weight > lastWeight) {
+            lastWeight = rule->weight;
+            result = inner;
+          }
         }
       } catch (NoExecuteDefinition&) {
         throw;
       }
     }
 
-    return tanuki::ref<TResult>();
+    return result;
   }
 
   tanuki::Collect<TResult> collect(const tanuki::String& input) {
+    tanuki::Collect<TResult> result;
+    int lastWeight = 0;
+
     for (ref<Matchable<TResult>>& rule : m_rules) {
       try {
-        tanuki::Collect<TResult> result = rule->collect(input);
+        tanuki::Collect<TResult> inner = rule->collect(input);
 
-        if (result.second) {
-          return result;
+        if (!inner.second.isNull()) {
+          if (rule->weight == -1) {
+            result = inner;
+            break;
+          } else if (rule->weight > lastWeight) {
+            lastWeight = rule->weight;
+            result = inner;
+          }
         }
       } catch (NoExecuteDefinition&) {
         throw;
       }
     }
 
-    return tanuki::Collect<TResult>();
+    return result;
   }
 
   template <typename TToken, typename... TOther>

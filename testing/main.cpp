@@ -18,6 +18,7 @@ void testGrammarSimple();
 void testGrammarMultiple();
 void testGrammarFunny();
 void testGrammarWithOperator();
+void testGrammarWeight();
 
 int main(int argc, char* argv[]) {
   tanuki_run("Ref", testRef);
@@ -234,6 +235,7 @@ void testGrammar() {
   tanuki_run("Multiple", testGrammarMultiple);
   tanuki_run("Funny", testGrammarFunny);
   tanuki_run("Grammer with operator", testGrammarWithOperator);
+  tanuki_run("Grammer with weight", testGrammarWeight);
 }
 
 void testGrammarSimple() {
@@ -263,7 +265,8 @@ void testGrammarSimple() {
   tanuki_result_expect(20, mainFragment->match("15+5"), "Simple great add");
   tanuki_result_expect(-10, mainFragment->match("5-15"), "Simple great less");
   tanuki_result_expect(2500, mainFragment->match("50*50"), "Simple great mult");
-  tanuki_result_expect(10, mainFragment->match("500/50"), "Simple great divide");
+  tanuki_result_expect(10, mainFragment->match("500/50"),
+                       "Simple great divide");
 
   mainFragment->skip(blank());
 
@@ -408,14 +411,51 @@ void testGrammarWithOperator() {
   undirect_ref<Fragment<int>> mainFragment = fragment<int>();
   master(mainFragment);
 
-  mainFragment->handle([](ref<int> i, ref<std::string>, ref<char>)
-                           -> ref<int> { return (i + 1); },
-                       integer(), constant("++"), constant(';'));
-  mainFragment->handle([](ref<char>, ref<std::vector<ref<int>>> in,
-                          ref<char>) -> ref<int> { return in->back(); },
+  mainFragment->handle([](ref<int> i, ref<std::string>, ref<char>) -> ref<int> {
+    return (i + 1);
+  }, integer(), constant("++"), constant(';'));
+  mainFragment->handle([](ref<char>, ref<std::vector<ref<int>>> in, ref<char>)
+                           -> ref<int> { return in->back(); },
                        constant('{'), +mainFragment, constant('}'));
   tanuki_result_expect(6, mainFragment->match("5++;"), "Simple incr");
   tanuki_result_expect(10, mainFragment->match("{5++;9++;}"), "Double incr");
   tanuki_result_expect(25, mainFragment->match("{1++;2++;3++;4++;24++;}"),
-                "Lot of incr");
+                       "Lot of incr");
+}
+
+void testGrammarWeight() {
+  use_tanuki;
+
+  undirect_ref<Fragment<int>> fragment1 = fragment<int>();
+  master(fragment1);
+
+  fragment1->handle([](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
+  fragment1->handle([](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
+  fragment1->handle([](ref<char>) -> ref<int> { return 10_ref; }, constant(';'));
+
+  undirect_ref<Fragment<int>> fragment2 = fragment<int>();
+  master(fragment2);
+
+  fragment2->handle(1, [](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
+  fragment2->handle(10, [](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
+  fragment2->handle(5, [](ref<char>) -> ref<int> { return 10_ref; }, constant(';'));
+
+  undirect_ref<Fragment<int>> fragment3 = fragment<int>();
+  master(fragment3);
+
+  fragment3->handle(1, [](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
+  fragment3->handle(10, [](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
+  fragment3->handle(10, [](ref<char>) -> ref<int> { return 10_ref; }, constant(';'));
+
+  undirect_ref<Fragment<int>> fragment4 = fragment<int>();
+  master(fragment4);
+
+  fragment4->handle(10, [](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
+  fragment4->handle([](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
+  fragment4->handle(5, [](ref<char>) -> ref<int> { return 10_ref; }, constant(';'));
+
+  tanuki_result_expect(1, fragment1->match(";"), "Classic behavior");
+  tanuki_result_expect(5, fragment2->match(";"), "Biggest Weight");
+  tanuki_result_expect(5, fragment2->match(";"), "Biggest Weight x2");
+  tanuki_result_expect(5, fragment2->match(";"), "No Weight");
 }
