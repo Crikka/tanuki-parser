@@ -196,6 +196,8 @@ class ref {
     return *this;
   }
 
+  operator TOn *() { return this->release(); }
+
   virtual ~ref() {
     if (m_state != slave && !isNull()) {
       m_intern->count--;
