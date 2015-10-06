@@ -212,10 +212,14 @@ class ref {
   TOn *operator->() const { return m_intern->on; }
   bool isNull() const { return (m_intern == nullptr); }
   TOn *release() {
-    TOn *res = m_intern->on;
-    this->m_intern = nullptr;
+    if (isNull()) {
+      return nullptr;
+    } else {
+      TOn *res = m_intern->on;
+      this->m_intern = nullptr;
 
-    return res;
+      return res;
+    }
   }
 
   operator bool() const { return (!isNull()); }
