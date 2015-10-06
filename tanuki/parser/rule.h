@@ -54,9 +54,9 @@ class Rule : public Matchable<TResult> {
  private:
   template <typename TRef, typename... TRestRef>
   struct IsRefCallback {
-    tanuki::ref<TResult> operator()(Rule<TResult, TRefs...>* rule,
-                                    const tanuki::String& in, TRef ref,
-                                    TRestRef... rest) {
+    static tanuki::ref<TResult> callback(Rule<TResult, TRefs...>* rule,
+                                         const tanuki::String& in, TRef ref,
+                                         TRestRef... rest) {
       tanuki::String skippedIn = in;
 
       int start;
@@ -96,9 +96,9 @@ class Rule : public Matchable<TResult> {
 
   template <typename TRef, typename... TRestRef>
   struct IsNullCallback {
-    tanuki::ref<TResult> operator()(Rule<TResult, TRefs...>* rule,
-                                    const tanuki::String& in, TRef ref,
-                                    TRestRef... rest) {
+    static tanuki::ref<TResult> callback(Rule<TResult, TRefs...>* rule,
+                                         const tanuki::String& in, TRef ref,
+                                         TRestRef... rest) {
       if (in.empty() || rule->m_context->shouldSkip(in)) {
         if (rule->m_callbackByExpansion) {
           return rule->m_callbackByExpansion(rest...);
@@ -115,10 +115,10 @@ class Rule : public Matchable<TResult> {
 
   template <typename TRef, typename... TRestRef>
   struct IsRefCallbackCollect {
-    tanuki::Collect<TResult> operator()(Rule<TResult, TRefs...>* rule,
-                                        const tanuki::String& in,
-                                        int initialSize, TRef ref,
-                                        TRestRef... rest) {
+    static tanuki::Collect<TResult> callback(Rule<TResult, TRefs...>* rule,
+                                             const tanuki::String& in,
+                                             int initialSize, TRef ref,
+                                             TRestRef... rest) {
       tanuki::Collect<TResult> result(
           std::make_pair(0, tanuki::ref<TResult>()));
 
@@ -157,10 +157,10 @@ class Rule : public Matchable<TResult> {
 
   template <typename TRef, typename... TRestRef>
   struct IsNullCallbackCollect {
-    tanuki::Collect<TResult> operator()(Rule<TResult, TRefs...>* rule,
-                                        const tanuki::String& in,
-                                        int initialSize, TRef,
-                                        TRestRef... rest) {
+    static tanuki::Collect<TResult> callback(Rule<TResult, TRefs...>* rule,
+                                             const tanuki::String& in,
+                                             int initialSize, TRef,
+                                             TRestRef... rest) {
       tanuki::Collect<TResult> result;
 
       if (rule->m_callbackByExpansion) {
@@ -192,23 +192,23 @@ class Rule : public Matchable<TResult> {
   template <typename TRef, typename... TRestRef>
   tanuki::ref<TResult> resolve(const tanuki::String& in, TRef ref,
                                TRestRef... rest) {
-    return
-        typename if_<std::is_same<TRef, std::nullptr_t>::value,
-                     IsNullCallback<TRef, TRestRef...>,
-                     IsRefCallback<TRef, TRestRef...>>::result()(this, in, ref,
-                                                                 rest...);
+    typedef typename if_<std::is_same<TRef, std::nullptr_t>::value,
+                         IsNullCallback<TRef, TRestRef...>,
+                         IsRefCallback<TRef, TRestRef...>>::result result;
+
+    return result::callback(this, in, ref, rest...);
   }
 
   template <typename TRef, typename... TRestRef>
   tanuki::Collect<TResult> resolve_collect(const tanuki::String& in,
                                            int initialSize, TRef ref,
                                            TRestRef... rest) {
-    return typename if_<
-        std::is_same<TRef, std::nullptr_t>::value,
-        IsNullCallbackCollect<TRef, TRestRef...>,
-        IsRefCallbackCollect<TRef, TRestRef...>>::result()(this, in,
-                                                           initialSize, ref,
-                                                           rest...);
+    typedef
+        typename if_<std::is_same<TRef, std::nullptr_t>::value,
+                     IsNullCallbackCollect<TRef, TRestRef...>,
+                     IsRefCallbackCollect<TRef, TRestRef...>>::result result;
+
+    return result::callback(this, in, initialSize, ref, rest...);
   }
 
   std::function<ref<TResult>(typename TRefs::TDeepType...)>
