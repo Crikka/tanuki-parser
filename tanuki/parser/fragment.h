@@ -111,8 +111,14 @@ class Fragment {
 
   template <typename TToken, typename... TOther>
   void skip(TToken token, TOther... other) {
-    this->m_skipped.push_back([token](const tanuki::String& in) -> bool {
-      return (token->match(in) == true);
+    this->m_skipped.push_back([token](const tanuki::String& in) -> int {
+      Collect<typename TToken::TValue::TReturnType> result = token->collect(in);
+
+      if (result.second) {
+        return result.first;
+      } else {
+        return 0;
+      }
     });
 
     skip<TOther...>(other...);
@@ -120,18 +126,26 @@ class Fragment {
 
   template <typename TToken>
   void skip(TToken token) {
-    this->m_skipped.push_back([token](const tanuki::String& in) -> bool {
-      return (token->match(in) == true);
+    this->m_skipped.push_back([token](const tanuki::String& in) -> int {
+      Collect<typename TToken::TValue::TReturnType> result = token->collect(in);
+
+      if (result.second) {
+        return result.first;
+      } else {
+        return 0;
+      }
     });
   }
 
-  bool shouldSkip(const tanuki::String& in) {
-    bool res = false;
+  int shouldSkip(const tanuki::String& in) {
+    int res = 0;
 
     for (const std::function<bool(const tanuki::String&)>& skipped :
          m_skipped) {
-      if (skipped(in)) {
-        res = true;
+      int current = skipped(in);
+
+      if (current > 0) {
+        res = current;
         break;
       }
     }
@@ -141,7 +155,7 @@ class Fragment {
 
  private:
   std::vector<ref<Matchable<TResult>>> m_rules;
-  std::vector<std::function<bool(const tanuki::String&)>> m_skipped;
+  std::vector<std::function<int(const tanuki::String&)>> m_skipped;
 };
 
 template <typename T>

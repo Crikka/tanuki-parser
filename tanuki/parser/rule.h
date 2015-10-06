@@ -59,20 +59,13 @@ class Rule : public Matchable<TResult> {
                                          TRestRef... rest) {
       tanuki::String skippedIn = in;
 
-      int start;
+      int toSkip = rule->m_context->shouldSkip(skippedIn);
 
-      do {
-        start = 0;
+      while (toSkip > 0) {
+        skippedIn = skippedIn.substr(toSkip);
 
-        for (int i = 0; i < skippedIn.size(); i++) {
-          if (rule->m_context->shouldSkip(skippedIn.substr(0, i))) {
-            start = i;
-            break;
-          }
-        }
-
-        skippedIn = skippedIn.substr(start);
-      } while (start != 0);
+        toSkip = rule->m_context->shouldSkip(skippedIn);
+      }
 
       auto collected = ref->collect(skippedIn);
 
@@ -124,20 +117,13 @@ class Rule : public Matchable<TResult> {
 
       tanuki::String skippedIn = in;
 
-      int start;
+      int toSkip = rule->m_context->shouldSkip(skippedIn);
 
-      do {
-        start = 0;
+      while (toSkip > 0) {
+        skippedIn = skippedIn.substr(toSkip);
 
-        for (int i = 0; i < skippedIn.size(); i++) {
-          if (rule->m_context->shouldSkip(skippedIn.substr(0, i))) {
-            start = i;
-            break;
-          }
-        }
-
-        skippedIn = skippedIn.substr(start);
-      } while (start != 0);
+        toSkip = rule->m_context->shouldSkip(skippedIn);
+      }
 
       auto collected = ref->collect(skippedIn);
 
