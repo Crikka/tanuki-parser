@@ -196,7 +196,7 @@ class ref {
     return *this;
   }
 
-  operator TOn *() { return this->release(); }
+  explicit operator TOn *() { return this->release(); }
 
   virtual ~ref() {
     if (m_state != slave && !isNull()) {
