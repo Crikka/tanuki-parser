@@ -578,7 +578,7 @@ Collect<TReturn> EndWithToken<TToken, TReturn>::collect(
     result = (UnaryToken<TToken, TReturn>::token()->collect(in.substr(i)));
 
     if (result.second) {
-      result.first = i;
+      result.first += i; // We need to keep size of collect
       break;
     }
   }

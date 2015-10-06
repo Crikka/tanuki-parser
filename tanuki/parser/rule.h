@@ -90,9 +90,21 @@ class Rule : public Matchable<TResult> {
   template <typename TRef, typename... TRestRef>
   struct IsNullCallback {
     static tanuki::ref<TResult> callback(Rule<TResult, TRefs...>* rule,
-                                         const tanuki::String& in, TRef ref,
+                                         const tanuki::String& in, TRef,
                                          TRestRef... rest) {
-      if (in.empty() || rule->m_context->shouldSkip(in)) {
+      tanuki::String skippedIn = in;
+
+      if (!skippedIn.empty()) {
+        int toSkip = rule->m_context->shouldSkip(skippedIn);
+
+        while (toSkip > 0) {
+          skippedIn = skippedIn.substr(toSkip);
+
+          toSkip = rule->m_context->shouldSkip(skippedIn);
+        }
+      }
+
+      if (skippedIn.empty()) {
         if (rule->m_callbackByExpansion) {
           return rule->m_callbackByExpansion(rest...);
         } else if (rule->m_callbackByTuple) {
