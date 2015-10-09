@@ -140,7 +140,7 @@ class Fragment {
   int shouldSkip(const tanuki::String& in) {
     int res = 0;
 
-    for (const std::function<bool(const tanuki::String&)>& skipped :
+    for (const std::function<int(const tanuki::String&)>& skipped :
          m_skipped) {
       int current = skipped(in);
 

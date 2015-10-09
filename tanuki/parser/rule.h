@@ -60,12 +60,12 @@ class Rule : public Matchable<TResult> {
       tanuki::String skippedIn = in;
 
       int toSkip = rule->m_context->shouldSkip(skippedIn);
-
       while (toSkip > 0) {
         skippedIn = skippedIn.substr(toSkip);
 
         toSkip = rule->m_context->shouldSkip(skippedIn);
       }
+
 
       auto collected = ref->collect(skippedIn);
 
