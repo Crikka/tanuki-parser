@@ -572,13 +572,13 @@ template <typename TToken, typename TReturn>
 Collect<TReturn> EndWithToken<TToken, TReturn>::collect(
     const tanuki::String &in) {
   int length = in.size();
-  Collect<TReturn> result = std::make_pair(0, ref<TReturn>());
+  Collect<TReturn> result;
 
   for (int i = 0; i < length; i++) {
     result = (UnaryToken<TToken, TReturn>::token()->collect(in.substr(i)));
 
     if (result.second) {
-      result.first += i; // We need to keep size of collect
+      result.first += i;  // We need to keep size of collect
       break;
     }
   }
@@ -709,7 +709,7 @@ ref<std::string> RangeToken<TLeft, TRight>::match(const tanuki::String &in) {
 template <typename TLeft, typename TRight>
 Collect<std::string> RangeToken<TLeft, TRight>::collect(
     const tanuki::String &in) {
-  Collect<std::string> result = std::make_pair(0, ref<std::string>());
+  Collect<std::string> result;
 
   if (m_left->collect(in).second) {
     auto right = m_right->collect(in);
@@ -717,7 +717,7 @@ Collect<std::string> RangeToken<TLeft, TRight>::collect(
     if (right.second) {
       result = std::make_pair(right.first,
                               ref<std::string>(new std::string(
-                                  in.substr(right.first).toStdString())));
+                                  in.substr(0, right.first).toStdString())));
     }
   }
 
