@@ -13,8 +13,8 @@ template <typename TResult>
 class Fragment {
  private:
   template <typename TRef>
-  static undirect_ref<Fragment<TResult>> select(
-      undirect_ref<Fragment<TResult>> self, TRef ref) {
+  static ref<Fragment<TResult>> select(
+      ref<Fragment<TResult>> self, TRef ref) {
     self->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
       return ((typename TRef::TValue::TReturnType*)in);
     }, ref);
@@ -23,8 +23,8 @@ class Fragment {
   }
 
   template <typename TRef, typename... TRefs>
-  static undirect_ref<Fragment<TResult>> select(
-      undirect_ref<Fragment<TResult>> self, TRef ref, TRefs... refs) {
+  static ref<Fragment<TResult>> select(
+      ref<Fragment<TResult>> self, TRef ref, TRefs... refs) {
     self->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
       return ((typename TRef::TValue::TReturnType*)in);
     }, ref);
@@ -43,8 +43,8 @@ class Fragment {
   virtual ~Fragment() = default;
 
   template <typename TRef>
-  static undirect_ref<Fragment<TResult>> select(TRef ref) {
-    undirect_ref<Fragment<TReturnType>> result(new Fragment<TResult>());
+  static ref<Fragment<TResult>> select(TRef ref) {
+    tanuki::ref<Fragment<TReturnType>> result(new Fragment<TResult>());
 
     result->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
       return ((typename TRef::TValue::TReturnType*)in);
@@ -54,8 +54,8 @@ class Fragment {
   }
 
   template <typename TRef, typename... TRefs>
-  static undirect_ref<Fragment<TResult>> select(TRef ref, TRefs... refs) {
-    undirect_ref<Fragment<TResult>> result(new Fragment<TResult>());
+  static ref<Fragment<TResult>> select(TRef ref, TRefs... refs) {
+    tanuki::ref<Fragment<TResult>> result(new Fragment<TResult>());
 
     result->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
       return ((typename TRef::TValue::TReturnType*)in);
@@ -201,7 +201,7 @@ class Fragment {
 };
 
 template <typename T>
-tanuki::undirect_ref<Fragment<T>> fragment() {
-  return tanuki::undirect_ref<Fragment<T>>(new Fragment<T>);
+tanuki::ref<Fragment<T>> fragment() {
+  return tanuki::ref<Fragment<T>>(new Fragment<T>);
 }
 }

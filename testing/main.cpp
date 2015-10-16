@@ -247,10 +247,10 @@ void testGrammarSelect() {
   struct B : public A {};
 
 
-  undirect_ref<Fragment<std::string>> fragment1 = Fragment<std::string>::select(constant("Hello"), range(constant("("), constant(")")));
-  undirect_ref<Fragment<B>> fragmentB = fragment<B>();
-  undirect_ref<Fragment<A>> fragmentA = fragment<A>();
-  undirect_ref<Fragment<A>> fragment2 = Fragment<A>::select(fragmentB, fragmentA);
+  ref<Fragment<std::string>> fragment1 = Fragment<std::string>::select(constant("Hello"), range(constant("("), constant(")")));
+  ref<Fragment<B>> fragmentB = fragment<B>();
+  ref<Fragment<A>> fragmentA = fragment<A>();
+  ref<Fragment<A>> fragment2 = Fragment<A>::select(fragmentB, fragmentA);
   (void)fragment2; // Test is in compilation
 
 
@@ -262,7 +262,7 @@ void testGrammarSelect() {
 void testGrammarSimple() {
   use_tanuki;
 
-  undirect_ref<Fragment<int>> mainFragment = fragment<int>();
+  ref<Fragment<int>> mainFragment = fragment<int>();
   master(mainFragment);
 
   mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
@@ -312,9 +312,9 @@ void testGrammarSimple() {
 void testGrammarMultiple() {
   use_tanuki;
 
-  undirect_ref<Fragment<std::string>> mainFragment = fragment<std::string>();
-  undirect_ref<Fragment<int>> mainFragment2 = fragment<int>();
-  undirect_ref<Fragment<int>> sub = fragment<int>();
+  ref<Fragment<std::string>> mainFragment = fragment<std::string>();
+  ref<Fragment<int>> mainFragment2 = fragment<int>();
+  ref<Fragment<int>> sub = fragment<int>();
 
   mainFragment->handle([](ref<std::string>, ref<char>, ref<std::string> word) {
     return word;
@@ -402,12 +402,12 @@ void testGrammarFunny() {
     }
   };
 
-  undirect_ref<Fragment<int>> mainFragment = fragment<int>();
+  ref<Fragment<int>> mainFragment = fragment<int>();
   master(mainFragment);
 
   mainFragment->handle([](ref<int> x, ref<OperatorReturnType> op, ref<int> y) {
     return op->operator()(x, y);
-  }, integer(), undirect_ref<Operator>(new Operator), integer());
+  }, integer(), ref<Operator>(new Operator), integer());
   mainFragment->handle([](ref<std::string>, ref<int> in, ref<std::string>) {
     return in;
   }, constant("("), mainFragment, constant(")"));
@@ -429,7 +429,7 @@ void testGrammarFunny() {
 void testGrammarWithOperator() {
   use_tanuki;
 
-  undirect_ref<Fragment<int>> mainFragment = fragment<int>();
+  ref<Fragment<int>> mainFragment = fragment<int>();
   master(mainFragment);
 
   mainFragment->handle([](ref<int> i, ref<std::string>, ref<char>) -> ref<int> {
@@ -447,7 +447,7 @@ void testGrammarWithOperator() {
 void testGrammarWeight() {
   use_tanuki;
 
-  undirect_ref<Fragment<int>> fragment1 = fragment<int>();
+  ref<Fragment<int>> fragment1 = fragment<int>();
   master(fragment1);
 
   fragment1->handle([](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
@@ -455,7 +455,7 @@ void testGrammarWeight() {
   fragment1->handle([](ref<char>) -> ref<int> { return 10_ref; },
                     constant(';'));
 
-  undirect_ref<Fragment<int>> fragment2 = fragment<int>();
+  ref<Fragment<int>> fragment2 = fragment<int>();
   master(fragment2);
 
   fragment2->handle(1, [](ref<char>) -> ref<int> { return 1_ref; },
@@ -465,7 +465,7 @@ void testGrammarWeight() {
   fragment2->handle(5, [](ref<char>) -> ref<int> { return 10_ref; },
                     constant(';'));
 
-  undirect_ref<Fragment<int>> fragment3 = fragment<int>();
+  ref<Fragment<int>> fragment3 = fragment<int>();
   master(fragment3);
 
   fragment3->handle(1, [](ref<char>) -> ref<int> { return 1_ref; },
@@ -475,7 +475,7 @@ void testGrammarWeight() {
   fragment3->handle(10, [](ref<char>) -> ref<int> { return 10_ref; },
                     constant(';'));
 
-  undirect_ref<Fragment<int>> fragment4 = fragment<int>();
+  ref<Fragment<int>> fragment4 = fragment<int>();
   master(fragment4);
 
   fragment4->handle(10, [](ref<char>) -> ref<int> { return 1_ref; },

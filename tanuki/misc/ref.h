@@ -124,15 +124,27 @@ namespace tanuki {
 
 template <typename>
 class ref;
-template <typename>
-class undirect_ref;
+
+template <bool, typename>
+struct DeepTypeIdentifier {};
 
 template <typename TOn>
 class ref {
- public:
-  typedef TOn TValue;
-
  private:
+  struct has_deep_type {
+    template <typename T>
+    static std::true_type test(typename T::TReturnType *) {
+      return std::true_type();
+    }
+
+    template <typename>
+    static std::false_type test(...) {
+      return std::false_type();
+    }
+
+    typedef decltype(test<TOn>(nullptr)) type;
+  };
+
   struct Intern {
     TOn *on;
     unsigned int count;
@@ -141,6 +153,11 @@ class ref {
   enum State : char { normal = 0, master = 1, slave = 2 };
 
  public:
+  typedef typename DeepTypeIdentifier<has_deep_type::type::value, TOn>::type
+      TDeepType;
+  typedef TOn TValue;
+
+
   ref() : m_intern(nullptr), m_state(normal) {}
 
   ref(TOn *on) : m_state(normal) {
@@ -224,33 +241,6 @@ class ref {
 
   operator bool() const { return (!isNull()); }
 
- protected:
-  TOn *expose() { return (m_intern->on); }
-
- private:
-  Intern *m_intern;
-  State m_state;
-
-  ref_friend_all_operator(int);
-  ref_friend_all_operator(float);
-  ref_friend_all_operator(double);
-  ref_friend_all_operator(long);
-  ref_friend_all_operator(long long);
-
-  template <typename T>
-  friend T *dereference(ref<T>);
-
-  template <typename T>
-  friend undirect_ref<T> autoref(T *);
-
-  template <typename T>
-  friend void master(undirect_ref<T> &);
-};
-
-template <typename TOn>
-class undirect_ref : public ref<TOn> {
- public:
-  typedef ref<typename TOn::TReturnType> TDeepType;
   bool greedy() {
     if (this->isNull()) {
       return false;
@@ -283,10 +273,37 @@ class undirect_ref : public ref<TOn> {
     }
   }
 
- public:
-  undirect_ref() : ref<TOn>() {}
+ protected:
+  TOn *expose() { return (m_intern->on); }
 
-  undirect_ref(TOn *on) : ref<TOn>(on) {}
+ private:
+  Intern *m_intern;
+  State m_state;
+
+  ref_friend_all_operator(int);
+  ref_friend_all_operator(float);
+  ref_friend_all_operator(double);
+  ref_friend_all_operator(long);
+  ref_friend_all_operator(long long);
+
+  template <typename T>
+  friend T *dereference(ref<T>);
+
+  template <typename T>
+  friend ref<T> autoref(T *);
+
+  template <typename T>
+  friend void master(ref<T> &);
+};
+
+template <typename TOn>
+struct DeepTypeIdentifier<true, TOn> {
+  typedef ref<typename TOn::TReturnType> type;
+};
+
+template <typename TOn>
+struct DeepTypeIdentifier<false, TOn> {
+  typedef void type;
 };
 
 ref<int> operator"" _ref(unsigned long long int in);
@@ -304,15 +321,15 @@ T *dereference(ref<T> ref) {
 }
 
 template <typename T>
-undirect_ref<T> autoref(T *data) {
-  undirect_ref<T> result(data);
+ref<T> autoref(T *data) {
+  ref<T> result(data);
   result.m_intern->count++;
 
   return result;
 }
 
 template <typename T>
-void master(undirect_ref<T> &ref) {
+void master(ref<T> &ref) {
   ref.m_state = tanuki::ref<T>::State::master;
 }
 

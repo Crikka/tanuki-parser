@@ -31,58 +31,58 @@ template <typename, typename>
 class RangeToken;
 
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
-undirect_ref<NotToken<TToken, TReturn>> operator!(undirect_ref<TToken> token);
+ref<NotToken<TToken, TReturn>> operator!(ref<TToken> token);
 template <typename TLeft, typename TRight>
-undirect_ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left,
+ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left,
                                                          ref<TRight> right);
 template <typename TLeft, typename TRight>
-undirect_ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left,
+ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left,
                                                           ref<TRight> right);
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
-undirect_ref<PlusToken<TToken, TReturn>> operator+(undirect_ref<TToken> token);
+ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
-undirect_ref<StarToken<TToken, TReturn>> operator*(undirect_ref<TToken> token);
+ref<StarToken<TToken, TReturn>> operator*(ref<TToken> token);
 template <typename TToken, typename TReturn = typename TToken::TReturnType>
-undirect_ref<OptionalToken<TToken, TReturn>> operator~(
-    undirect_ref<TToken> token);
+ref<OptionalToken<TToken, TReturn>> operator~(
+    ref<TToken> token);
 
 // Operator
 template <typename TToken, typename TReturn>
-undirect_ref<NotToken<TToken, TReturn>> operator!(undirect_ref<TToken> token) {
-  return undirect_ref<NotToken<TToken, TReturn>>(
+ref<NotToken<TToken, TReturn>> operator!(ref<TToken> token) {
+  return ref<NotToken<TToken, TReturn>>(
       new NotToken<TToken, TReturn>(token));
 }
 
 template <typename TLeft, typename TRight>
-undirect_ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left,
+ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left,
                                                          ref<TRight> right) {
-  return undirect_ref<OrToken<TLeft, TRight>>(
+  return ref<OrToken<TLeft, TRight>>(
       new OrToken<TLeft, TRight>(left, right));
 }
 
 template <typename TLeft, typename TRight>
-undirect_ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left,
+ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left,
                                                           ref<TRight> right) {
-  return undirect_ref<AndToken<TLeft, TRight>>(
+  return ref<AndToken<TLeft, TRight>>(
       new AndToken<TLeft, TRight>(left, right));
 }
 
 template <typename TToken, typename TReturn>
-undirect_ref<PlusToken<TToken, TReturn>> operator+(undirect_ref<TToken> token) {
-  return undirect_ref<PlusToken<TToken, TReturn>>(
+ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token) {
+  return ref<PlusToken<TToken, TReturn>>(
       new PlusToken<TToken, TReturn>(token));
 }
 
 template <typename TToken, typename TReturn>
-undirect_ref<StarToken<TToken, TReturn>> operator*(undirect_ref<TToken> token) {
-  return undirect_ref<StarToken<TToken, TReturn>>(
+ref<StarToken<TToken, TReturn>> operator*(ref<TToken> token) {
+  return ref<StarToken<TToken, TReturn>>(
       new StarToken<TToken, TReturn>(token));
 }
 
 template <typename TToken, typename TReturn>
-undirect_ref<OptionalToken<TToken, TReturn>> operator~(
-    undirect_ref<TToken> token) {
-  return undirect_ref<OptionalToken<TToken, TReturn>>(
+ref<OptionalToken<TToken, TReturn>> operator~(
+    ref<TToken> token) {
+  return ref<OptionalToken<TToken, TReturn>>(
       new OptionalToken<TToken, TReturn>(token));
 }
 }

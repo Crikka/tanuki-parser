@@ -20,7 +20,6 @@
   using tanuki::Fragment;       \
                                 \
   using tanuki::ref;            \
-  using tanuki::undirect_ref;   \
   using tanuki::dereference;    \
   using tanuki::autoref;        \
   using tanuki::master;         \
