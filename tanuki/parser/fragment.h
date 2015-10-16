@@ -11,6 +11,27 @@
 namespace tanuki {
 template <typename TResult>
 class Fragment {
+ private:
+  template <typename TRef>
+  static undirect_ref<Fragment<TResult>> select(
+      undirect_ref<Fragment<TResult>> self, TRef ref) {
+    self->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
+      return ((typename TRef::TValue::TReturnType*)in);
+    }, ref);
+
+    return self;
+  }
+
+  template <typename TRef, typename... TRefs>
+  static undirect_ref<Fragment<TResult>> select(
+      undirect_ref<Fragment<TResult>> self, TRef ref, TRefs... refs) {
+    self->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
+      return ((typename TRef::TValue::TReturnType*)in);
+    }, ref);
+
+    return Fragment<TResult>::select<TRefs...>(self, refs...);
+  }
+
  public:
   typedef TResult TReturnType;
 
@@ -20,6 +41,28 @@ class Fragment {
   int biggestSize() { return -1; }
 
   virtual ~Fragment() = default;
+
+  template <typename TRef>
+  static undirect_ref<Fragment<TResult>> select(TRef ref) {
+    undirect_ref<Fragment<TReturnType>> result(new Fragment<TResult>());
+
+    result->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
+      return ((typename TRef::TValue::TReturnType*)in);
+    }, ref);
+
+    return result;
+  }
+
+  template <typename TRef, typename... TRefs>
+  static undirect_ref<Fragment<TResult>> select(TRef ref, TRefs... refs) {
+    undirect_ref<Fragment<TResult>> result(new Fragment<TResult>());
+
+    result->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
+      return ((typename TRef::TValue::TReturnType*)in);
+    }, ref);
+
+    return Fragment<TResult>::select<TRefs...>(result, refs...);
+  }
 
   template <typename... TRefs>
   void handle(std::function<ref<TResult>(
@@ -140,8 +183,7 @@ class Fragment {
   int shouldSkip(const tanuki::String& in) {
     int res = 0;
 
-    for (const std::function<int(const tanuki::String&)>& skipped :
-         m_skipped) {
+    for (const std::function<int(const tanuki::String&)>& skipped : m_skipped) {
       int current = skipped(in);
 
       if (current > 0) {

@@ -14,6 +14,7 @@ void testLexerUnary();
 void testLexerBinary();
 
 void testGrammar();
+void testGrammarSelect();
 void testGrammarSimple();
 void testGrammarMultiple();
 void testGrammarFunny();
@@ -231,11 +232,31 @@ void testLexerBinary() {
 }
 
 void testGrammar() {
+  tanuki_run("Select", testGrammarSelect);
   tanuki_run("Simple", testGrammarSimple);
   tanuki_run("Multiple", testGrammarMultiple);
   tanuki_run("Funny", testGrammarFunny);
   tanuki_run("Grammer with operator", testGrammarWithOperator);
   tanuki_run("Grammer with weight", testGrammarWeight);
+}
+
+void testGrammarSelect() {
+  use_tanuki;
+
+  struct A {};
+  struct B : public A {};
+
+
+  undirect_ref<Fragment<std::string>> fragment1 = Fragment<std::string>::select(constant("Hello"), range(constant("("), constant(")")));
+  undirect_ref<Fragment<B>> fragmentB = fragment<B>();
+  undirect_ref<Fragment<A>> fragmentA = fragment<A>();
+  undirect_ref<Fragment<A>> fragment2 = Fragment<A>::select(fragmentB, fragmentA);
+  (void)fragment2; // Test is in compilation
+
+
+
+  tanuki_result_expect("Hello", fragment1->match("Hello"), "Hello");
+  tanuki_result_expect("(Hello)", fragment1->match("(Hello)"), "(Hello)");
 }
 
 void testGrammarSimple() {
@@ -431,28 +452,37 @@ void testGrammarWeight() {
 
   fragment1->handle([](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
   fragment1->handle([](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
-  fragment1->handle([](ref<char>) -> ref<int> { return 10_ref; }, constant(';'));
+  fragment1->handle([](ref<char>) -> ref<int> { return 10_ref; },
+                    constant(';'));
 
   undirect_ref<Fragment<int>> fragment2 = fragment<int>();
   master(fragment2);
 
-  fragment2->handle(1, [](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
-  fragment2->handle(10, [](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
-  fragment2->handle(5, [](ref<char>) -> ref<int> { return 10_ref; }, constant(';'));
+  fragment2->handle(1, [](ref<char>) -> ref<int> { return 1_ref; },
+                    constant(';'));
+  fragment2->handle(10, [](ref<char>) -> ref<int> { return 5_ref; },
+                    constant(';'));
+  fragment2->handle(5, [](ref<char>) -> ref<int> { return 10_ref; },
+                    constant(';'));
 
   undirect_ref<Fragment<int>> fragment3 = fragment<int>();
   master(fragment3);
 
-  fragment3->handle(1, [](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
-  fragment3->handle(10, [](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
-  fragment3->handle(10, [](ref<char>) -> ref<int> { return 10_ref; }, constant(';'));
+  fragment3->handle(1, [](ref<char>) -> ref<int> { return 1_ref; },
+                    constant(';'));
+  fragment3->handle(10, [](ref<char>) -> ref<int> { return 5_ref; },
+                    constant(';'));
+  fragment3->handle(10, [](ref<char>) -> ref<int> { return 10_ref; },
+                    constant(';'));
 
   undirect_ref<Fragment<int>> fragment4 = fragment<int>();
   master(fragment4);
 
-  fragment4->handle(10, [](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
+  fragment4->handle(10, [](ref<char>) -> ref<int> { return 1_ref; },
+                    constant(';'));
   fragment4->handle([](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
-  fragment4->handle(5, [](ref<char>) -> ref<int> { return 10_ref; }, constant(';'));
+  fragment4->handle(5, [](ref<char>) -> ref<int> { return 10_ref; },
+                    constant(';'));
 
   tanuki_result_expect(1, fragment1->match(";"), "Classic behavior");
   tanuki_result_expect(5, fragment2->match(";"), "Biggest Weight");
