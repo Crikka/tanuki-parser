@@ -9,17 +9,17 @@
 
 namespace tanuki {
 // Unary
-template <typename, typename>
+template <typename>
 class NotToken;
-template <typename, typename>
+template <typename>
 class PlusToken;
-template <typename, typename>
+template <typename>
 class StarToken;
-template <typename, typename>
+template <typename>
 class OptionalToken;
-template <typename, typename>
+template <typename>
 class StartWithToken;
-template <typename, typename>
+template <typename>
 class EndWithToken;
 
 // Binary
@@ -30,27 +30,27 @@ class AndToken;
 template <typename, typename>
 class RangeToken;
 
-template <typename TToken, typename TReturn = typename TToken::TReturnType>
-ref<NotToken<TToken, TReturn>> operator!(ref<TToken> token);
+template <typename TToken>
+ref<NotToken<TToken>> operator!(ref<TToken> token);
 template <typename TLeft, typename TRight>
 ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left,
                                                          ref<TRight> right);
 template <typename TLeft, typename TRight>
 ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left,
                                                           ref<TRight> right);
-template <typename TToken, typename TReturn = typename TToken::TReturnType>
-ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token);
-template <typename TToken, typename TReturn = typename TToken::TReturnType>
-ref<StarToken<TToken, TReturn>> operator*(ref<TToken> token);
-template <typename TToken, typename TReturn = typename TToken::TReturnType>
-ref<OptionalToken<TToken, TReturn>> operator~(
+template <typename TToken>
+ref<PlusToken<TToken>> operator+(ref<TToken> token);
+template <typename TToken>
+ref<StarToken<TToken>> operator*(ref<TToken> token);
+template <typename TToken>
+ref<OptionalToken<TToken>> operator~(
     ref<TToken> token);
 
 // Operator
-template <typename TToken, typename TReturn>
-ref<NotToken<TToken, TReturn>> operator!(ref<TToken> token) {
-  return ref<NotToken<TToken, TReturn>>(
-      new NotToken<TToken, TReturn>(token));
+template <typename TToken>
+ref<NotToken<TToken>> operator!(ref<TToken> token) {
+  return ref<NotToken<TToken>>(
+      new NotToken<TToken>(token));
 }
 
 template <typename TLeft, typename TRight>
@@ -67,22 +67,22 @@ ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left,
       new AndToken<TLeft, TRight>(left, right));
 }
 
-template <typename TToken, typename TReturn>
-ref<PlusToken<TToken, TReturn>> operator+(ref<TToken> token) {
-  return ref<PlusToken<TToken, TReturn>>(
-      new PlusToken<TToken, TReturn>(token));
+template <typename TToken>
+ref<PlusToken<TToken>> operator+(ref<TToken> token) {
+  return ref<PlusToken<TToken>>(
+      new PlusToken<TToken>(token));
 }
 
-template <typename TToken, typename TReturn>
-ref<StarToken<TToken, TReturn>> operator*(ref<TToken> token) {
-  return ref<StarToken<TToken, TReturn>>(
-      new StarToken<TToken, TReturn>(token));
+template <typename TToken>
+ref<StarToken<TToken>> operator*(ref<TToken> token) {
+  return ref<StarToken<TToken>>(
+      new StarToken<TToken>(token));
 }
 
-template <typename TToken, typename TReturn>
-ref<OptionalToken<TToken, TReturn>> operator~(
+template <typename TToken>
+ref<OptionalToken<TToken>> operator~(
     ref<TToken> token) {
-  return ref<OptionalToken<TToken, TReturn>>(
-      new OptionalToken<TToken, TReturn>(token));
+  return ref<OptionalToken<TToken>>(
+      new OptionalToken<TToken>(token));
 }
 }

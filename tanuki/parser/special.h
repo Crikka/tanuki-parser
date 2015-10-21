@@ -24,17 +24,17 @@ ref<WordToken<TToken>> word(ref<TToken> inner) {
 }
 
 template <typename TToken>
-ref<StartWithToken<TToken, typename TToken::TReturnType>> startWith(
+ref<StartWithToken<TToken>> startWith(
     ref<TToken> inner) {
-  return ref<StartWithToken<TToken, typename TToken::TReturnType>>(
-      new StartWithToken<TToken, typename TToken::TReturnType>(inner));
+  return ref<StartWithToken<TToken>>(
+      new StartWithToken<TToken>(inner));
 }
 
 template <typename TToken>
-ref<EndWithToken<TToken, typename TToken::TReturnType>> endWith(
+ref<EndWithToken<TToken>> endWith(
     ref<TToken> inner) {
-  return ref<EndWithToken<TToken, typename TToken::TReturnType>>(
-      new EndWithToken<TToken, typename TToken::TReturnType>(inner));
+  return ref<EndWithToken<TToken>>(
+      new EndWithToken<TToken>(inner));
 }
 
 template <typename TLeft, typename TRight>
