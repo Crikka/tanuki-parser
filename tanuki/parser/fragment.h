@@ -36,7 +36,7 @@ class Fragment {
   typedef TResult TReturnType;
 
   virtual bool greedy() { return true; }
-  virtual bool stopAtFirstGreedyFail() { return true; }
+  virtual bool stopAtlengthGreedyFail() { return true; }
   int exactSize() { return -1; }
   int biggestSize() { return -1; }
 
@@ -127,15 +127,15 @@ class Fragment {
     return result;
   }
 
-  tanuki::Collect<TResult> collect(const tanuki::String& input) {
-    tanuki::Collect<TResult> result;
+  tanuki::Piece<TResult> consume(const tanuki::String& input) {
+    tanuki::Piece<TResult> result;
     int lastWeight = 0;
 
     for (ref<Matchable<TResult>>& rule : m_rules) {
       try {
-        tanuki::Collect<TResult> inner = rule->collect(input);
+        tanuki::Piece<TResult> inner = rule->consume(input);
 
-        if (!inner.second.isNull()) {
+        if (!inner.result.isNull()) {
           if (rule->weight == -1) {
             result = inner;
             break;
@@ -155,10 +155,10 @@ class Fragment {
   template <typename TToken, typename... TOther>
   void skip(TToken token, TOther... other) {
     this->m_skipped.push_back([token](const tanuki::String& in) -> int {
-      Collect<typename TToken::TValue::TReturnType> result = token->collect(in);
+      Piece<typename TToken::TValue::TReturnType> result = token->consume(in);
 
-      if (result.second) {
-        return result.first;
+      if (result.result) {
+        return result.length;
       } else {
         return 0;
       }
@@ -170,10 +170,10 @@ class Fragment {
   template <typename TToken>
   void skip(TToken token) {
     this->m_skipped.push_back([token](const tanuki::String& in) -> int {
-      Collect<typename TToken::TValue::TReturnType> result = token->collect(in);
+      Piece<typename TToken::TValue::TReturnType> result = token->consume(in);
 
-      if (result.second) {
-        return result.first;
+      if (result.result) {
+        return result.length;
       } else {
         return 0;
       }

@@ -334,5 +334,8 @@ void master(ref<T> &ref) {
 }
 
 template <typename TReturn>
-using Collect = typename std::pair<int, ref<TReturn>>;
+struct Piece {
+  uint32_t length;
+  ref<TReturn> result;
+};
 }

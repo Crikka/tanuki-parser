@@ -377,32 +377,32 @@ void testGrammarFunny() {
       }
     }
 
-    tanuki::Collect<OperatorReturnType> collect(const tanuki::String& in) {
+    tanuki::Piece<OperatorReturnType> consume(const tanuki::String& in) {
       if (in.empty()) {
-        return std::make_pair(0, ref<OperatorReturnType>());
+        return tanuki::Piece<OperatorReturnType>{0, ref<OperatorReturnType>()};
       } else {
         if (in[0] == '+') {
-          return std::make_pair(
+          return tanuki::Piece<OperatorReturnType>{
               1,
               ref<OperatorReturnType>(new OperatorReturnType(
-                  [](ref<int> x, ref<int> y) -> ref<int> { return x + y; })));
+                  [](ref<int> x, ref<int> y) -> ref<int> { return x + y; }))};
         } else if (in[0] == '-') {
-          return std::make_pair(
+          return tanuki::Piece<OperatorReturnType>{
               1,
               ref<OperatorReturnType>(new OperatorReturnType(
-                  [](ref<int> x, ref<int> y) -> ref<int> { return x - y; })));
+                  [](ref<int> x, ref<int> y) -> ref<int> { return x - y; }))};
         } else if (in[0] == '*') {
-          return std::make_pair(
+          return tanuki::Piece<OperatorReturnType>{
               1,
               ref<OperatorReturnType>(new OperatorReturnType(
-                  [](ref<int> x, ref<int> y) -> ref<int> { return x * y; })));
+                  [](ref<int> x, ref<int> y) -> ref<int> { return x * y; }))};
         } else if (in[0] == '/') {
-          return std::make_pair(
+          return tanuki::Piece<OperatorReturnType>{
               1,
               ref<OperatorReturnType>(new OperatorReturnType(
-                  [](ref<int> x, ref<int> y) -> ref<int> { return x / y; })));
+                  [](ref<int> x, ref<int> y) -> ref<int> { return x / y; }))};
         } else {
-          return std::make_pair(0, ref<OperatorReturnType>());
+          return tanuki::Piece<OperatorReturnType>{0, ref<OperatorReturnType>()};
         }
       }
     }

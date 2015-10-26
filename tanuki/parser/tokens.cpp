@@ -14,11 +14,11 @@ ref<std::string> ConstantToken::match(const tanuki::String &in) {
                              : ref<std::string>());
 }
 
-Collect<std::string> ConstantToken::collect(const tanuki::String &in) {
-  int length = m_constant.size();
+Piece<std::string> ConstantToken::consume(const tanuki::String &in) {
+  uint32_t length = m_constant.size();
 
   if (in.size() < length) {
-    return std::make_pair(0, ref<std::string>());
+    return Piece<std::string>{0, ref<std::string>()};
   } else {
     bool result = true;
 
@@ -30,10 +30,10 @@ Collect<std::string> ConstantToken::collect(const tanuki::String &in) {
     }
 
     if (result) {
-      return std::make_pair(length,
-                            ref<std::string>(new std::string(m_constant)));
+      return Piece<std::string>{length,
+                                ref<std::string>(new std::string(m_constant))};
     } else {
-      return std::make_pair(0, ref<std::string>());
+      return Piece<std::string>{0, ref<std::string>()};
     }
   }
 }
@@ -49,14 +49,14 @@ ref<char> CharToken::match(const tanuki::String &in) {
   }
 }
 
-Collect<char> CharToken::collect(const tanuki::String &in) {
+Piece<char> CharToken::consume(const tanuki::String &in) {
   if (in.empty()) {
-    return std::make_pair(0, ref<char>());
+    return Piece<char>{0, ref<char>()};
   } else {
     if (in[0] == m_character) {
-      return std::make_pair(1, ref<char>(new char(m_character)));
+      return Piece<char>{1, ref<char>(new char(m_character))};
     } else {
-      return std::make_pair(0, ref<char>());
+      return Piece<char>{0, ref<char>()};
     }
   }
 }
@@ -76,17 +76,17 @@ ref<int> IntegerToken::match(const tanuki::String &in) {
   }
 }
 
-Collect<int> IntegerToken::collect(const tanuki::String &in) {
+Piece<int> IntegerToken::consume(const tanuki::String &in) {
   static auto inner(word(anyIn('0', '9')));
 
-  Collect<std::string> result(inner->collect(in));
+  Piece<std::string> result(inner->consume(in));
 
-  if (result.second) {
-    return std::make_pair(
-        result.first, ref<int>(new int(std::stoi(
-                          useOnce(result.second.release()).exposeValue()))));
+  if (result.result) {
+    return Piece<int>{result.length,
+                      ref<int>(new int(std::stoi(
+                          useOnce(result.result.release()).exposeValue())))};
   } else {
-    return std::make_pair(0, ref<int>());
+    return Piece<int>{0, ref<int>()};
   }
 }
 
@@ -112,14 +112,14 @@ ref<char> AnyOfToken::match(const tanuki::String &in) {
   }
 }
 
-Collect<char> AnyOfToken::collect(const tanuki::String &in) {
+Piece<char> AnyOfToken::consume(const tanuki::String &in) {
   if (in.empty()) {
-    return std::make_pair(0, ref<char>());
+    return Piece<char>{0, ref<char>()};
   } else {
     if (this->m_intern[in[0]]) {
-      return std::make_pair(1, ref<char>(new char(in[0])));
+      return Piece<char>{1, ref<char>(new char(in[0]))};
     } else {
-      return std::make_pair(0, ref<char>());
+      return Piece<char>{0, ref<char>()};
     }
   }
 }
@@ -139,14 +139,14 @@ ref<char> AnyInToken::match(const tanuki::String &in) {
   }
 }
 
-Collect<char> AnyInToken::collect(const tanuki::String &in) {
+Piece<char> AnyInToken::consume(const tanuki::String &in) {
   if (in.empty()) {
-    return std::make_pair(0, ref<char>());
+    return Piece<char>{0, ref<char>()};
   } else {
     if ((in[0] >= m_inferiorBound) and (in[0] <= m_superiorBound)) {
-      return std::make_pair(1, ref<char>(new char(in[0])));
+      return Piece<char>{1, ref<char>(new char(in[0]))};
     } else {
-      return std::make_pair(0, ref<char>());
+      return Piece<char>{0, ref<char>()};
     }
   }
 }
