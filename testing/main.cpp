@@ -200,6 +200,14 @@ void testLexerUnary() {
   tanuki_match_expect(
       false, range(constant("Hello"), constant("Hella"))->match("Hella"),
       "Range end false");
+
+  // Repeat
+  tanuki_match_expect(true, repeat<3>(constant('6'))->match("666"),
+                      "Repeat 666 True");
+  tanuki_match_expect(false, repeat<3>(constant('6'))->match("676"),
+                      "Repeat 666 False");
+  tanuki_match_expect(true, repeat<4>(digit())->match("4525"),
+                      "Repeat digicode True");
 }
 
 void testLexerBinary() {
@@ -246,14 +254,12 @@ void testGrammarSelect() {
   struct A {};
   struct B : public A {};
 
-
-  ref<Fragment<std::string>> fragment1 = Fragment<std::string>::select(constant("Hello"), range(constant("("), constant(")")));
+  ref<Fragment<std::string>> fragment1 = Fragment<std::string>::select(
+      constant("Hello"), range(constant("("), constant(")")));
   ref<Fragment<B>> fragmentB = fragment<B>();
   ref<Fragment<A>> fragmentA = fragment<A>();
   ref<Fragment<A>> fragment2 = Fragment<A>::select(fragmentB, fragmentA);
-  (void)fragment2; // Test is in compilation
-
-
+  (void)fragment2;  // Test is in compilation
 
   tanuki_result_expect("Hello", fragment1->match("Hello"), "Hello");
   tanuki_result_expect("(Hello)", fragment1->match("(Hello)"), "(Hello)");

@@ -4,6 +4,7 @@
 #include <vector>
 #include <stack>
 #include <utility>
+#include <array>
 
 #include <climits>
 
@@ -36,6 +37,8 @@ template <typename>
 class StartWithToken;
 template <typename>
 class EndWithToken;
+template <typename, std::size_t>
+class RepeatableToken;
 
 // Binary
 template <typename, typename, typename>
@@ -239,6 +242,21 @@ class EndWithToken : public UnaryToken<TToken, typename TToken::TReturnType> {
 };
 
 /**
+ * @brief The RepeatableToken class
+ */
+template <typename TToken, std::size_t size>
+class RepeatableToken
+    : public UnaryToken<TToken,
+                        std::array<typename TToken::TReturnType, size>> {
+public:
+  explicit RepeatableToken(ref<TToken> inner);
+  ref<std::array<typename TToken::TReturnType, size>> match(
+      const tanuki::String &in) override;
+  Collect<std::array<typename TToken::TReturnType, size>> collect(
+      const tanuki::String &in) override;
+};
+
+/**
  * @brief The BinaryToken class
  */
 template <typename TLeft, typename TRight, typename TReturn>
@@ -434,13 +452,15 @@ ref<std::vector<ref<typename TToken::TReturnType>>> StarToken<TToken>::match(
 template <typename TToken>
 Collect<std::vector<ref<typename TToken::TReturnType>>>
 StarToken<TToken>::collect(const tanuki::String &in) {
-  Collect<std::vector<ref<typename TToken::TReturnType>>> result = (m_inner->collect(in));
+  Collect<std::vector<ref<typename TToken::TReturnType>>> result =
+      (m_inner->collect(in));
 
   if (result.second) {
     return result;
   } else {
     return std::make_pair(
-        0, ref<std::vector<ref<typename TToken::TReturnType>>>(new std::vector<ref<typename TToken::TReturnType>>()));
+        0, ref<std::vector<ref<typename TToken::TReturnType>>>(
+               new std::vector<ref<typename TToken::TReturnType>>()));
   }
 }
 
@@ -525,8 +545,8 @@ StartWithToken<TToken>::StartWithToken(ref<TToken> token)
     : UnaryToken<TToken, typename TToken::TReturnType>(token) {}
 
 template <typename TToken>
-ref<typename TToken::TReturnType> StartWithToken<
-    TToken>::match(const tanuki::String &in) {
+ref<typename TToken::TReturnType> StartWithToken<TToken>::match(
+    const tanuki::String &in) {
   Collect<typename TToken::TReturnType> result =
       UnaryToken<TToken, typename TToken::TReturnType>::token()->collect(in);
 
@@ -540,7 +560,8 @@ ref<typename TToken::TReturnType> StartWithToken<
 template <typename TToken>
 Collect<typename TToken::TReturnType> StartWithToken<TToken>::collect(
     const tanuki::String &in) {
-  Collect<typename TToken::TReturnType> result = UnaryToken<TToken, typename TToken::TReturnType>::token()->collect(in);
+  Collect<typename TToken::TReturnType> result =
+      UnaryToken<TToken, typename TToken::TReturnType>::token()->collect(in);
 
   if (result.second) {
     return result;
@@ -554,18 +575,21 @@ EndWithToken<TToken>::EndWithToken(ref<TToken> token)
     : UnaryToken<TToken, typename TToken::TReturnType>(token) {}
 
 template <typename TToken>
-ref<typename TToken::TReturnType> EndWithToken<TToken>::match(const tanuki::String &in) {
+ref<typename TToken::TReturnType> EndWithToken<TToken>::match(
+    const tanuki::String &in) {
   if (in.empty()) {
     return ref<typename TToken::TReturnType>();
   }
 
-  int exactSize = UnaryToken<TToken, typename TToken::TReturnType>::token().exactSize();
+  int exactSize =
+      UnaryToken<TToken, typename TToken::TReturnType>::token().exactSize();
   int length = in.size();
 
   if (exactSize == -1) {
     ref<typename TToken::TReturnType> result;
 
-    int biggestSize = UnaryToken<TToken, typename TToken::TReturnType>::token().biggestSize();
+    int biggestSize =
+        UnaryToken<TToken, typename TToken::TReturnType>::token().biggestSize();
     int minimum;
 
     if (biggestSize == -1) {
@@ -581,7 +605,8 @@ ref<typename TToken::TReturnType> EndWithToken<TToken>::match(const tanuki::Stri
     do {
       length--;
 
-      result = UnaryToken<TToken, typename TToken::TReturnType>::token()->match(in.substr(length));
+      result = UnaryToken<TToken, typename TToken::TReturnType>::token()->match(
+          in.substr(length));
 
       if (result) {
         break;
@@ -597,7 +622,8 @@ ref<typename TToken::TReturnType> EndWithToken<TToken>::match(const tanuki::Stri
       return ref<typename TToken::TReturnType>();
     } else {
       ref<typename TToken::TReturnType> result =
-          (UnaryToken<TToken, typename TToken::TReturnType>::token()->match(in.substr(delta)));
+          (UnaryToken<TToken, typename TToken::TReturnType>::token()->match(
+              in.substr(delta)));
 
       if (result) {
         return result;
@@ -615,7 +641,9 @@ Collect<typename TToken::TReturnType> EndWithToken<TToken>::collect(
   Collect<typename TToken::TReturnType> result;
 
   for (int i = 0; i < length; i++) {
-    result = (UnaryToken<TToken, typename TToken::TReturnType>::token()->collect(in.substr(i)));
+    result =
+        (UnaryToken<TToken, typename TToken::TReturnType>::token()->collect(
+            in.substr(i)));
 
     if (result.second) {
       result.first += i;  // We need to keep size of collect
@@ -624,6 +652,80 @@ Collect<typename TToken::TReturnType> EndWithToken<TToken>::collect(
   }
 
   return result;
+}
+
+template <typename TToken, std::size_t size>
+RepeatableToken<TToken, size>::RepeatableToken(ref<TToken> token)
+    : UnaryToken<TToken, std::array<typename TToken::TReturnType, size>>(
+          token) {}
+
+template <typename TToken, std::size_t size>
+ref<std::array<typename TToken::TReturnType, size>>
+RepeatableToken<TToken, size>::match(const tanuki::String &in) {
+  std::array<typename TToken::TReturnType, size> result;
+
+  std::size_t index = 0;
+  tanuki::String current = in;
+
+  while (index < size) {
+    Collect<typename TToken::TReturnType> buffer =
+        UnaryToken<TToken,
+                   std::array<typename TToken::TReturnType, size>>::token()
+            ->collect(current);
+
+    if (buffer.second) {
+      result[index] = buffer.second;
+      current = current.substr(buffer.first);
+
+      index++;
+    } else {
+      break;
+    }
+  }
+
+  if (index == size && current.empty()) {
+    return ref<std::array<typename TToken::TReturnType, size>>(
+        new std::array<typename TToken::TReturnType, size>(result));
+  } else {
+    return ref<std::array<typename TToken::TReturnType, size>>();
+  }
+}
+
+template <typename TToken, std::size_t size>
+Collect<std::array<typename TToken::TReturnType, size>>
+RepeatableToken<TToken, size>::collect(const tanuki::String &in) {
+  std::array<typename TToken::TReturnType, size> result;
+
+  std::size_t index = 0;
+  int matchSize = 0;
+  tanuki::String current = in;
+
+  while (index < size) {
+    Collect<typename TToken::TReturnType> buffer =
+        UnaryToken<TToken,
+                   std::array<typename TToken::TReturnType, size>>::token()
+            ->collect(current);
+
+    if (buffer.second) {
+      result[index] = buffer.second;
+      current = current.substr(buffer.first);
+      matchSize += buffer.first;
+
+      index++;
+    } else {
+      break;
+    }
+  }
+
+  if (index == size && current.empty()) {
+    return std::make_pair(
+        matchSize,
+        ref<std::array<typename TToken::TReturnType, size>>(
+            new std::array<typename TToken::TReturnType, size>(result)));
+  } else {
+    return std::make_pair(
+        0, ref<std::array<typename TToken::TReturnType, size>>());
+  }
 }
 
 // Binary

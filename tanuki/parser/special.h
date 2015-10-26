@@ -9,6 +9,7 @@ ref<CharToken> constant(char character);
 ref<IntegerToken> integer();
 ref<AnyInToken> anyIn(char inferiorBound, char superiorBound);
 
+
 // Helper constants
 ref<CharToken> space();
 ref<CharToken> tab();
@@ -21,6 +22,11 @@ ref<AnyOfToken> anyOf(char c);
 template <typename TToken>
 ref<WordToken<TToken>> word(ref<TToken> inner) {
     return ref<WordToken<TToken>>(new WordToken<TToken>(inner));
+}
+
+template<std::size_t size, typename TToken>
+ref<RepeatableToken<TToken, size>> repeat(ref<TToken> token) {
+  return ref<RepeatableToken<TToken, size>>(new RepeatableToken<TToken, size>(token));
 }
 
 template <typename TToken>

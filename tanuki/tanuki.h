@@ -8,6 +8,7 @@
   using tanuki::range;          \
   using tanuki::anyOf;          \
   using tanuki::anyIn;          \
+  using tanuki::repeat;          \
   using tanuki::word;           \
   using tanuki::space;          \
   using tanuki::tab;            \

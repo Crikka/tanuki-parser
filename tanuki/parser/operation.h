@@ -33,56 +33,44 @@ class RangeToken;
 template <typename TToken>
 ref<NotToken<TToken>> operator!(ref<TToken> token);
 template <typename TLeft, typename TRight>
-ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left,
-                                                         ref<TRight> right);
+ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left, ref<TRight> right);
 template <typename TLeft, typename TRight>
-ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left,
-                                                          ref<TRight> right);
+ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left, ref<TRight> right);
 template <typename TToken>
 ref<PlusToken<TToken>> operator+(ref<TToken> token);
 template <typename TToken>
 ref<StarToken<TToken>> operator*(ref<TToken> token);
 template <typename TToken>
-ref<OptionalToken<TToken>> operator~(
-    ref<TToken> token);
+ref<OptionalToken<TToken>> operator~(ref<TToken> token);
 
 // Operator
 template <typename TToken>
 ref<NotToken<TToken>> operator!(ref<TToken> token) {
-  return ref<NotToken<TToken>>(
-      new NotToken<TToken>(token));
+  return ref<NotToken<TToken>>(new NotToken<TToken>(token));
 }
 
 template <typename TLeft, typename TRight>
-ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left,
-                                                         ref<TRight> right) {
-  return ref<OrToken<TLeft, TRight>>(
-      new OrToken<TLeft, TRight>(left, right));
+ref<OrToken<TLeft, TRight>> operator||(ref<TLeft> left, ref<TRight> right) {
+  return ref<OrToken<TLeft, TRight>>(new OrToken<TLeft, TRight>(left, right));
 }
 
 template <typename TLeft, typename TRight>
-ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left,
-                                                          ref<TRight> right) {
-  return ref<AndToken<TLeft, TRight>>(
-      new AndToken<TLeft, TRight>(left, right));
+ref<AndToken<TLeft, TRight>> operator&&(ref<TLeft> left, ref<TRight> right) {
+  return ref<AndToken<TLeft, TRight>>(new AndToken<TLeft, TRight>(left, right));
 }
 
 template <typename TToken>
 ref<PlusToken<TToken>> operator+(ref<TToken> token) {
-  return ref<PlusToken<TToken>>(
-      new PlusToken<TToken>(token));
+  return ref<PlusToken<TToken>>(new PlusToken<TToken>(token));
 }
 
 template <typename TToken>
 ref<StarToken<TToken>> operator*(ref<TToken> token) {
-  return ref<StarToken<TToken>>(
-      new StarToken<TToken>(token));
+  return ref<StarToken<TToken>>(new StarToken<TToken>(token));
 }
 
 template <typename TToken>
-ref<OptionalToken<TToken>> operator~(
-    ref<TToken> token) {
-  return ref<OptionalToken<TToken>>(
-      new OptionalToken<TToken>(token));
+ref<OptionalToken<TToken>> operator~(ref<TToken> token) {
+  return ref<OptionalToken<TToken>>(new OptionalToken<TToken>(token));
 }
 }
