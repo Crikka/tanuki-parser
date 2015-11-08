@@ -13,8 +13,7 @@ template <typename TResult>
 class Fragment {
  private:
   template <typename TRef>
-  static ref<Fragment<TResult>> select(
-      ref<Fragment<TResult>> self, TRef ref) {
+  static ref<Fragment<TResult>> select(ref<Fragment<TResult>> self, TRef ref) {
     self->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
       return ((typename TRef::TValue::TReturnType*)in);
     }, ref);
@@ -23,8 +22,8 @@ class Fragment {
   }
 
   template <typename TRef, typename... TRefs>
-  static ref<Fragment<TResult>> select(
-      ref<Fragment<TResult>> self, TRef ref, TRefs... refs) {
+  static ref<Fragment<TResult>> select(ref<Fragment<TResult>> self, TRef ref,
+                                       TRefs... refs) {
     self->handle([](typename TRef::TDeepType in) -> tanuki::ref<TResult> {
       return ((typename TRef::TValue::TReturnType*)in);
     }, ref);
@@ -106,7 +105,7 @@ class Fragment {
     tanuki::ref<TResult> result;
     int lastWeight = 0;
 
-    for (ref<Matchable<TResult>>& rule : m_rules) {
+    for (ref<Matchable<TResult>> rule : m_rules) {
       try {
         tanuki::ref<TResult> inner = rule->match(input);
 

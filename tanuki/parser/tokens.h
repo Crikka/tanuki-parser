@@ -188,18 +188,17 @@ class PlusToken
  */
 template <typename TToken>
 class StarToken
-    : public UnaryToken<TToken,
-                        std::vector<ref<typename TToken::TReturnType>>> {
+    : public UnaryToken<TToken, Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> {
  public:
   explicit StarToken(ref<TToken> token);
-  ref<std::vector<ref<typename TToken::TReturnType>>> match(
+  ref<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> match(
       const tanuki::String &in) override;
-  Piece<std::vector<ref<typename TToken::TReturnType>>> consume(
+  Piece<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> consume(
       const tanuki::String &in) override;
   bool stopAtlengthGreedyFail() override { return false; }
 
  private:
-  ref<PlusToken<TToken>> m_inner;
+  ref<OptionalToken<PlusToken<TToken>>> m_inner;
 };
 
 /**
@@ -207,13 +206,12 @@ class StarToken
  */
 template <typename TToken>
 class OptionalToken
-    : public UnaryToken<TToken,
-                        std::vector<ref<typename TToken::TReturnType>>> {
+    : public UnaryToken<TToken, Optional<ref<typename TToken::TReturnType>>> {
  public:
   explicit OptionalToken(ref<TToken> inner);
-  ref<std::vector<ref<typename TToken::TReturnType>>> match(
+  ref<Optional<ref<typename TToken::TReturnType>>> match(
       const tanuki::String &in) override;
-  Piece<std::vector<ref<typename TToken::TReturnType>>> consume(
+  Piece<Optional<ref<typename TToken::TReturnType>>> consume(
       const tanuki::String &in) override;
 };
 
@@ -433,112 +431,52 @@ PlusToken<TToken>::consume(const tanuki::String &in) {
 
 template <typename TToken>
 StarToken<TToken>::StarToken(ref<TToken> token)
-    : UnaryToken<TToken, std::vector<ref<typename TToken::TReturnType>>>(token),
-      m_inner(+token) {}
+    : UnaryToken<TToken, Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>>(token),
+      m_inner(~ + token) {}
 
 template <typename TToken>
-ref<std::vector<ref<typename TToken::TReturnType>>> StarToken<TToken>::match(
+ref<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> StarToken<TToken>::match(
     const tanuki::String &in) {
-  ref<std::vector<ref<typename TToken::TReturnType>>> result =
-      (m_inner->match(in));
-
-  if (result) {
-    return result;
-  } else {
-    return ref<std::vector<ref<typename TToken::TReturnType>>>(
-        new std::vector<ref<typename TToken::TReturnType>>());
-  }
+  return m_inner->match(in);
 }
 
 template <typename TToken>
-Piece<std::vector<ref<typename TToken::TReturnType>>>
-StarToken<TToken>::consume(const tanuki::String &in) {
-  Piece<std::vector<ref<typename TToken::TReturnType>>> result =
-      (m_inner->consume(in));
-
-  if (result.result) {
-    return result;
-  } else {
-    return Piece<std::vector<ref<typename TToken::TReturnType>>>{
-        0, ref<std::vector<ref<typename TToken::TReturnType>>>(
-               new std::vector<ref<typename TToken::TReturnType>>())};
-  }
+Piece<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> StarToken<TToken>::consume(
+    const tanuki::String &in) {
+  return m_inner->consume(in);
 }
 
 template <typename TToken>
 OptionalToken<TToken>::OptionalToken(ref<TToken> token)
-    : UnaryToken<TToken, std::vector<ref<typename TToken::TReturnType>>>(
-          token) {}
+  : UnaryToken<TToken, Optional<ref<typename TToken::TReturnType>>>(token) {}
 
 template <typename TToken>
-ref<std::vector<ref<typename TToken::TReturnType>>>
-OptionalToken<TToken>::match(const tanuki::String &in) {
-  if (in.empty()) {
-    return ref<std::vector<ref<typename TToken::TReturnType>>>(
-        new std::vector<ref<typename TToken::TReturnType>>());
-  }
+ref<Optional<ref<typename TToken::TReturnType>>> OptionalToken<TToken>::match(
+    const tanuki::String &in) {
+  ref<Optional<ref<typename TToken::TReturnType>>> result(
+      new Optional<ref<typename TToken::TReturnType>>());
+  ref<typename TToken::TReturnType> subresult = this->token()->match(in);
 
-  ref<std::vector<ref<typename TToken::TReturnType>>> result(
-      new std::vector<ref<typename TToken::TReturnType>>());
-
-  int exactSize =
-      UnaryToken<TToken,
-                 std::vector<ref<typename TToken::TReturnType>>>::token()
-          .exactSize();
-  int length = in.size();
-
-  if (exactSize == -1) {
-    int biggestSize =
-        UnaryToken<TToken,
-                   std::vector<ref<typename TToken::TReturnType>>>::token()
-            .biggestSize();
-
-    if (length <= biggestSize) {
-      ref<typename TToken::TReturnType> subResult =
-          UnaryToken<TToken,
-                     std::vector<ref<typename TToken::TReturnType>>>::token()
-              ->match(in);
-
-      if (subResult) {
-        result = ref<std::vector<ref<typename TToken::TReturnType>>>(
-            new std::vector<ref<typename TToken::TReturnType>>({subResult}));
-      }
-    }
-  } else {
-    if (length == exactSize) {
-      ref<typename TToken::TReturnType> subResult =
-          UnaryToken<TToken,
-                     std::vector<ref<typename TToken::TReturnType>>>::token()
-              ->match(in);
-
-      if (subResult) {
-        result = ref<std::vector<ref<typename TToken::TReturnType>>>(
-            new std::vector<ref<typename TToken::TReturnType>>({subResult}));
-      }
-    }
+  if (subresult) {
+    result->token = subresult;
   }
 
   return result;
 }
 
 template <typename TToken>
-Piece<std::vector<ref<typename TToken::TReturnType>>>
+Piece<Optional<ref<typename TToken::TReturnType>>>
 OptionalToken<TToken>::consume(const tanuki::String &in) {
-  Piece<typename TToken::TReturnType> result =
-      UnaryToken<TToken,
-                 std::vector<ref<typename TToken::TReturnType>>>::token()
-          ->consume(in);
+  Piece<Optional<ref<typename TToken::TReturnType>>> result{
+      0, new Optional<ref<typename TToken::TReturnType>>()};
+  Piece<typename TToken::TReturnType> subresult = this->token()->consume(in);
 
-  if (result.result) {
-    return Piece<std::vector<ref<typename TToken::TReturnType>>>{
-        result.length,
-        ref<std::vector<ref<typename TToken::TReturnType>>>(
-            new std::vector<ref<typename TToken::TReturnType>>())};
-  } else {
-    return Piece<std::vector<ref<typename TToken::TReturnType>>>{
-        0, ref<std::vector<ref<typename TToken::TReturnType>>>(
-               new std::vector<ref<typename TToken::TReturnType>>())};
+  if (subresult) {
+    result.length = subresult.length;
+    result.result->token = subresult.result;
   }
+
+  return result;
 }
 
 template <typename TToken>

@@ -335,7 +335,16 @@ void master(ref<T> &ref) {
 
 template <typename TReturn>
 struct Piece {
+  operator bool() { return ((bool) result); }
+
   uint32_t length;
   ref<TReturn> result;
+};
+
+template <typename TToken>
+struct Optional {
+  operator bool() { return ((bool) token); }
+
+  TToken token;
 };
 }

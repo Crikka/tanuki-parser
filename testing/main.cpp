@@ -110,6 +110,12 @@ void testLexerSimple() {
   tanuki_match_expect(false, anyOf('a', 'b', 'c')->match("z"), "anyOf False");
   tanuki_match_expect(false, anyOf('a', 'b', 'c')->match("ab"), "anyOf False");
 
+  // Consequent
+  tanuki_match_expect(true, consequent(constant('+'), integer())->match("+45"),
+                      "Consequent True");
+  tanuki_match_expect(false, consequent(constant('+'), integer())->match("-45"),
+                      "Consequent False");
+
   // Regex
   auto tWord = word(letter());
 
@@ -402,7 +408,8 @@ void testGrammarFunny() {
               ref<OperatorReturnType>(new OperatorReturnType(
                   [](ref<int> x, ref<int> y) -> ref<int> { return x / y; }))};
         } else {
-          return tanuki::Piece<OperatorReturnType>{0, ref<OperatorReturnType>()};
+          return tanuki::Piece<OperatorReturnType>{0,
+                                                   ref<OperatorReturnType>()};
         }
       }
     }
