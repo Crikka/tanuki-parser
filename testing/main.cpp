@@ -22,11 +22,24 @@ void testGrammarWithOperator();
 void testGrammarWeight();
 
 int main(int argc, char* argv[]) {
-  tanuki_run("Ref", testRef);
+  /*tanuki_run("Ref", testRef);
   tanuki_run("Lexer", testLexer);
   tanuki_run("Grammar", testGrammar);
 
-  tanuki_summary;
+  tanuki_summary;*/
+
+  use_tanuki;
+
+  ref<Fragment<int>> type = fragment<int>();
+
+  type->handle([](auto) -> ref<int> { return 0_ref; }, constant("int"));
+  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('%'));
+  type->handle([](auto) -> ref<int> { return 0_ref; }, type);
+
+  /*tanuki_match_expect(true, type->match("int"), "T1");
+  tanuki_match_expect(true, type->match("int%"), "T2");
+  tanuki_match_expect(true, type->match("int%%"), "T3");*/
+  //tanuki_match_expect(true, type->match("int%%%"), "T4");
 }
 
 void testRef() {
@@ -277,18 +290,18 @@ void testGrammarSimple() {
   ref<Fragment<int>> mainFragment = fragment<int>();
   master(mainFragment);
 
-  mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
-    return (i + j);
-  }, integer(), constant('+'), integer());
-  mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
-    return (i - j);
-  }, integer(), constant('-'), integer());
-  mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
-    return (i * j);
-  }, integer(), constant('*'), integer());
-  mainFragment->handle([](ref<int> i, ref<char>, ref<int> j) -> ref<int> {
-    return (i / j);
-  }, integer(), constant('/'), integer());
+  mainFragment->handle(
+      [](ref<int> i, ref<char>, ref<int> j) -> ref<int> { return (i + j); },
+      integer(), constant('+'), integer());
+  mainFragment->handle(
+      [](ref<int> i, ref<char>, ref<int> j) -> ref<int> { return (i - j); },
+      integer(), constant('-'), integer());
+  mainFragment->handle(
+      [](ref<int> i, ref<char>, ref<int> j) -> ref<int> { return (i * j); },
+      integer(), constant('*'), integer());
+  mainFragment->handle(
+      [](ref<int> i, ref<char>, ref<int> j) -> ref<int> { return (i / j); },
+      integer(), constant('/'), integer());
 
   tanuki_result_expect(10, mainFragment->match("5+5"), "Simple add");
   tanuki_result_expect(0, mainFragment->match("5-5"), "Simple less");
@@ -328,19 +341,19 @@ void testGrammarMultiple() {
   ref<Fragment<int>> mainFragment2 = fragment<int>();
   ref<Fragment<int>> sub = fragment<int>();
 
-  mainFragment->handle([](ref<std::string>, ref<char>, ref<std::string> word) {
-    return word;
-  }, constant("hey"), space(), word(letter()));
-  mainFragment->handle([](ref<int> i, ref<char>, ref<std::string> word) {
-    return word;
-  }, sub, space(), word(letter()));
+  mainFragment->handle(
+      [](ref<std::string>, ref<char>, ref<std::string> word) { return word; },
+      constant("hey"), space(), word(letter()));
+  mainFragment->handle(
+      [](ref<int> i, ref<char>, ref<std::string> word) { return word; }, sub,
+      space(), word(letter()));
 
   mainFragment->handle([](ref<std::string> word) { return word; },
                        word(letter()));
 
-  mainFragment2->handle([](ref<int> i, ref<char>, ref<int> number) {
-    return (i + number);
-  }, sub, space(), integer());
+  mainFragment2->handle(
+      [](ref<int> i, ref<char>, ref<int> number) { return (i + number); }, sub,
+      space(), integer());
 
   sub->handle([](ref<std::string>) { return 25_ref; }, constant("hello"));
 
@@ -418,12 +431,12 @@ void testGrammarFunny() {
   ref<Fragment<int>> mainFragment = fragment<int>();
   master(mainFragment);
 
-  mainFragment->handle([](ref<int> x, ref<OperatorReturnType> op, ref<int> y) {
-    return op->operator()(x, y);
-  }, integer(), ref<Operator>(new Operator), integer());
-  mainFragment->handle([](ref<std::string>, ref<int> in, ref<std::string>) {
-    return in;
-  }, constant("("), mainFragment, constant(")"));
+  mainFragment->handle([](ref<int> x, ref<OperatorReturnType> op,
+                          ref<int> y) { return op->operator()(x, y); },
+                       integer(), ref<Operator>(new Operator), integer());
+  mainFragment->handle(
+      [](ref<std::string>, ref<int> in, ref<std::string>) { return in; },
+      constant("("), mainFragment, constant(")"));
 
   tanuki_result_expect(10, mainFragment->match("5+5"), "Add");
   tanuki_result_expect(0, mainFragment->match("5-5"), "Less");
@@ -445,11 +458,11 @@ void testGrammarWithOperator() {
   ref<Fragment<int>> mainFragment = fragment<int>();
   master(mainFragment);
 
-  mainFragment->handle([](ref<int> i, ref<std::string>, ref<char>) -> ref<int> {
-    return (i + 1);
-  }, integer(), constant("++"), constant(';'));
-  mainFragment->handle([](ref<char>, ref<std::vector<ref<int>>> in, ref<char>)
-                           -> ref<int> { return in->back(); },
+  mainFragment->handle([](ref<int> i, ref<std::string>,
+                          ref<char>) -> ref<int> { return (i + 1); },
+                       integer(), constant("++"), constant(';'));
+  mainFragment->handle([](ref<char>, ref<std::vector<ref<int>>> in,
+                          ref<char>) -> ref<int> { return in->back(); },
                        constant('{'), +mainFragment, constant('}'));
   tanuki_result_expect(6, mainFragment->match("5++;"), "Simple incr");
   tanuki_result_expect(10, mainFragment->match("{5++;9++;}"), "Double incr");

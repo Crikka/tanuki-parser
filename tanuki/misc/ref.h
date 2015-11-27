@@ -5,8 +5,10 @@
 #include <utility>
 
 #include "exception.h"
+#include "string.h"
 
 #include <iostream>
+#include <vector>
 #include <typeinfo>
 
 namespace tanuki {
@@ -157,7 +159,6 @@ class ref {
       TDeepType;
   typedef TOn TValue;
 
-
   ref() : m_intern(nullptr), m_state(normal) {}
 
   ref(TOn *on) : m_state(normal) {
@@ -211,6 +212,10 @@ class ref {
     }
 
     return *this;
+  }
+
+  bool operator==(void *other) {
+    return (isNull() ? false : (m_intern->on == other));
   }
 
   explicit operator TOn *() { return this->release(); }
@@ -335,7 +340,7 @@ void master(ref<T> &ref) {
 
 template <typename TReturn>
 struct Piece {
-  operator bool() { return ((bool) result); }
+  operator bool() { return ((bool)result); }
 
   uint32_t length;
   ref<TReturn> result;
@@ -343,8 +348,55 @@ struct Piece {
 
 template <typename TToken>
 struct Optional {
-  operator bool() { return ((bool) token); }
+  operator bool() { return ((bool)token); }
 
   TToken token;
+};
+
+template <typename TReturn>
+struct ConsumeRequest {
+  ConsumeRequest(String in) : in(in) {}
+
+  virtual Piece<TReturn> next() = 0;
+
+  String in;
+};
+
+template <typename T>
+class Yielder {
+ private:
+  typedef std::vector<T> TContainer;
+  typedef typename TContainer::iterator TIterator;
+
+  struct YielderIterator {
+    TIterator intern;
+    uint32_t *self;
+
+    void operator++() {
+      intern++;
+      (*self)++;
+    }
+    T operator*() { return *intern; }
+    bool operator!=(const YielderIterator &other) {
+      return (intern != other.intern);
+    }
+  };
+
+ public:
+  Yielder() : m_data(new TContainer()), m_current(0) {}
+
+  void reset() { m_current = 0; }
+  void load(ref<TContainer> data) { this->m_data = data; }
+
+  YielderIterator begin() { return {m_data->begin() + m_current, &m_current}; }
+  YielderIterator end() { return {m_data->end(), nullptr}; }
+
+  void push(const T &value) { m_data->push_back(value); }
+  size_t size() { return m_data->size(); }
+
+ private:
+  ref<TContainer> m_data;
+
+  uint32_t m_current;
 };
 }

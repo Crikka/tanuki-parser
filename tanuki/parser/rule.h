@@ -17,8 +17,11 @@ class Matchable {
 
   virtual tanuki::ref<TResult> match(const tanuki::String&) = 0;
   virtual tanuki::Piece<TResult> consume(const tanuki::String&) = 0;
+  virtual tanuki::Piece<TResult> consume(
+      const tanuki::String&, Yielder<Piece<TResult>>& results) = 0;
 
   short weight;
+  bool isLeftRecursive;
 };
 
 template <typename TResult, typename... TRefs>
@@ -51,6 +54,10 @@ class Rule : public Matchable<TResult> {
     return tanuki::apply(static_resolve_consume, m_refs);
   }
 
+  tanuki::Piece<TResult> consume(
+      const tanuki::String&,
+      Yielder<Piece<TResult>>& results) override {}
+
  private:
   template <typename TRef, typename... TRestRef>
   struct IsRefCallback {
@@ -66,14 +73,13 @@ class Rule : public Matchable<TResult> {
         toSkip = rule->m_context->shouldSkip(skippedIn);
       }
 
-      auto consumeed = ref->consume(skippedIn);
+      auto request = ref->request(skippedIn);
 
-      if (consumeed.result) {
+      while (auto consumed = request->next()) {
         try {
           tanuki::ref<TResult> result =
               rule->resolve<TRestRef..., typename TRef::TDeepType>(
-                  skippedIn.substr(consumeed.length), rest...,
-                  consumeed.result);
+                  skippedIn.substr(consumed.length), rest..., consumed.result);
 
           if (result) {
             return result;
@@ -136,13 +142,14 @@ class Rule : public Matchable<TResult> {
         toSkip = rule->m_context->shouldSkip(skippedIn);
       }
 
-      auto consumeed = ref->consume(skippedIn);
+      auto consumed = ref->consume(skippedIn);
 
-      if (consumeed.result) {
+      if (consumed) {
         try {
           result = rule->resolve_consume<TRestRef..., typename TRef::TDeepType>(
-              skippedIn.substr(consumeed.length), initialSize, rest...,
-              consumeed.result);
+              skippedIn.substr(consumed.length), initialSize, rest...,
+              consumed.result);
+
         } catch (NoExecuteDefinition&) {
           throw;
         }

@@ -69,6 +69,29 @@ class Token {
   virtual int exactSize() { return -1; }
   virtual int biggestSize() { return -1; }
 
+  ref<ConsumeRequest<TReturn>> request(const tanuki::String &in) {
+    struct TokenConsumeRequest : public ConsumeRequest<TReturn> {
+      TokenConsumeRequest(tanuki::String in, Token<TReturn> *self)
+          : ConsumeRequest<TReturn>(in), self(self), consumed(false) {}
+
+      Piece<TReturn> next() override {
+        Piece<TReturn> result;
+
+        if (!consumed) {
+          result = self->consume(this->in);
+          consumed = true;
+        }
+
+        return result;
+      }
+
+      Token<TReturn> *self;
+      bool consumed;
+    };
+
+    return ref<ConsumeRequest<TReturn>>(new TokenConsumeRequest(in, this));
+  }
+
   typedef TReturn TReturnType;
 };
 
@@ -188,7 +211,9 @@ class PlusToken
  */
 template <typename TToken>
 class StarToken
-    : public UnaryToken<TToken, Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> {
+    : public UnaryToken<
+          TToken,
+          Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> {
  public:
   explicit StarToken(ref<TToken> token);
   ref<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> match(
@@ -431,24 +456,26 @@ PlusToken<TToken>::consume(const tanuki::String &in) {
 
 template <typename TToken>
 StarToken<TToken>::StarToken(ref<TToken> token)
-    : UnaryToken<TToken, Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>>(token),
+    : UnaryToken<TToken,
+                 Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>>(
+          token),
       m_inner(~ + token) {}
 
 template <typename TToken>
-ref<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> StarToken<TToken>::match(
-    const tanuki::String &in) {
+ref<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>>
+StarToken<TToken>::match(const tanuki::String &in) {
   return m_inner->match(in);
 }
 
 template <typename TToken>
-Piece<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> StarToken<TToken>::consume(
-    const tanuki::String &in) {
+Piece<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>>
+StarToken<TToken>::consume(const tanuki::String &in) {
   return m_inner->consume(in);
 }
 
 template <typename TToken>
 OptionalToken<TToken>::OptionalToken(ref<TToken> token)
-  : UnaryToken<TToken, Optional<ref<typename TToken::TReturnType>>>(token) {}
+    : UnaryToken<TToken, Optional<ref<typename TToken::TReturnType>>>(token) {}
 
 template <typename TToken>
 ref<Optional<ref<typename TToken::TReturnType>>> OptionalToken<TToken>::match(
