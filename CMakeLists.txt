@@ -26,7 +26,6 @@ set(SOURCES
 
     tanuki/misc/exception.h
     tanuki/misc/helper.h
-    tanuki/misc/metaprog.h
     tanuki/misc/ref.h
     tanuki/misc/ref.cpp
     tanuki/misc/string

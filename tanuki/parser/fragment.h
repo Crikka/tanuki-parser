@@ -195,15 +195,14 @@ class Fragment {
                 initialResultLength = leftRecursiveRules.size();
 
                 for (int i = 0; i <= current; i++) {
-                  Piece<TResult> inner =
-                      leftRecursiveRules[i]->consume(input, queues[i]);
+                  /*leftRecursiveRules[i]->consume(input, queues[i]);
 
                   if (inner) {
                     if (inner.length == input.size()) {
                       result = inner.result;
                       goto out;
                     }
-                  }
+                  }*/
                 }
               } while (initialResultLength < leftRecursiveRules.size());
             }
@@ -270,15 +269,14 @@ class Fragment {
                 initialResultLength = leftRecursiveRules.size();
 
                 for (int i = 0; i <= current; i++) {
-                  Piece<TResult> inner =
-                      leftRecursiveRules[i]->consume(input, queues[i]);
+                  leftRecursiveRules[i]->consume(input, queues[i]);
 
-                  if (inner) {
+                  /*if (inner) {
                     if (inner.length > best_consume) {
                       result = inner;
                       best_consume = inner.length;
                     }
-                  }
+                  }*/
                 }
               } while (initialResultLength < leftRecursiveRules.size());
             }

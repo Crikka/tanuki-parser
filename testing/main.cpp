@@ -28,13 +28,13 @@ int main(int argc, char* argv[]) {
 
   tanuki_summary;*/
 
-  use_tanuki;
+  /*use_tanuki;
 
   ref<Fragment<int>> type = fragment<int>();
 
   type->handle([](auto) -> ref<int> { return 0_ref; }, constant("int"));
   type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('%'));
-  type->handle([](auto) -> ref<int> { return 0_ref; }, type);
+  type->handle([](auto) -> ref<int> { return 0_ref; }, type);*/
 
   /*tanuki_match_expect(true, type->match("int"), "T1");
   tanuki_match_expect(true, type->match("int%"), "T2");
