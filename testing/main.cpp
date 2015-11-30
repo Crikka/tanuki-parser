@@ -22,11 +22,11 @@ void testGrammarWithOperator();
 void testGrammarWeight();
 
 int main(int argc, char* argv[]) {
-  /*tanuki_run("Ref", testRef);
+  tanuki_run("Ref", testRef);
   tanuki_run("Lexer", testLexer);
   tanuki_run("Grammar", testGrammar);
 
-  tanuki_summary;*/
+  tanuki_summary;
 
   /*use_tanuki;
 
