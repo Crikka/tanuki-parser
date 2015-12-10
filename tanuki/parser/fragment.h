@@ -36,9 +36,9 @@ class Fragment {
     return Fragment<TResult>::select<TRefs...>(self, refs...);
   }
 
-  std::vector<Piece<TResult>> consumeNonLeftRecursive(
+  ref<std::vector<Piece<TResult>>> consumeNonLeftRecursive(
       const tanuki::String& input) {
-    std::vector<Piece<TResult>> result;
+    ref<std::vector<Piece<TResult>>> result(new std::vector<Piece<TResult>>);
 
     for (ref<Matchable<TResult>> rule : m_rules) {
       try {
@@ -46,7 +46,7 @@ class Fragment {
           Piece<TResult> inner = rule->consume(input);
 
           if (inner) {
-            result.push_back(inner);
+            result->push_back(inner);
           }
         }
       } catch (NoExecuteDefinition&) {
@@ -165,23 +165,26 @@ class Fragment {
     ref<TResult> result;
 
     if (m_recursiveRulesCount) {
-      std::vector<Piece<TResult>> nonLeftRecursiveResults =
+      ref<std::vector<Piece<TResult>>> nonLeftRecursiveResults =
           this->consumeNonLeftRecursive(input);
 
-      for (Piece<TResult> current : nonLeftRecursiveResults) {
-        if (current.length == input.size()) {
-          result = current.result;
+      Yielder<Piece<TResult>> own;
+      own.load(nonLeftRecursiveResults);
+
+      for (Piece<TResult> sub : own) {
+        if (sub.length == input.size()) {
+          result = sub.result;
           break;
         }
       }
 
-      if (!nonLeftRecursiveResults.empty() && (!(bool)result)) {
+      if (!nonLeftRecursiveResults->empty() && (!(bool)result)) {
         std::vector<ref<Matchable<TResult>>> leftRecursiveRules;
 
         Yielder<Piece<TResult>>* queues =
             new Yielder<Piece<TResult>>[m_recursiveRulesCount];
         for (int i = 0; i < m_recursiveRulesCount; i++) {
-          queues[i].load(&nonLeftRecursiveResults);
+          queues[i].load(nonLeftRecursiveResults);
         }
 
         for (ref<Matchable<TResult>> rule : m_rules) {
@@ -195,14 +198,14 @@ class Fragment {
                 initialResultLength = leftRecursiveRules.size();
 
                 for (int i = 0; i <= current; i++) {
-                  /*leftRecursiveRules[i]->consume(input, queues[i]);
+                  leftRecursiveRules[i]->consume(input, queues[i]);
 
-                  if (inner) {
-                    if (inner.length == input.size()) {
-                      result = inner.result;
+                  for (Piece<TResult> sub : own) {
+                    if (sub.length == input.size()) {
+                      result = sub.result;
                       goto out;
                     }
-                  }*/
+                  }
                 }
               } while (initialResultLength < leftRecursiveRules.size());
             }
@@ -239,23 +242,26 @@ class Fragment {
     int best_consume = -1;
 
     if (m_recursiveRulesCount) {
-      std::vector<Piece<TResult>> nonLeftRecursiveResults =
+      ref<std::vector<Piece<TResult>>> nonLeftRecursiveResults =
           this->consumeNonLeftRecursive(input);
 
-      for (Piece<TResult> current : nonLeftRecursiveResults) {
-        if (current.length > best_consume) {
-          result = current;
-          best_consume = current.length;
+      Yielder<Piece<TResult>> own;
+      own.load(nonLeftRecursiveResults);
+
+      for (Piece<TResult> sub : own) {
+        if (sub.length > best_consume) {
+          result = sub;
+          best_consume = sub.length;
         }
       }
 
-      if (!nonLeftRecursiveResults.empty()) {
+      if (!nonLeftRecursiveResults->empty()) {
         std::vector<ref<Matchable<TResult>>> leftRecursiveRules;
 
         Yielder<Piece<TResult>>* queues =
             new Yielder<Piece<TResult>>[m_recursiveRulesCount];
         for (int i = 0; i < m_recursiveRulesCount; i++) {
-          queues[i].load(&nonLeftRecursiveResults);
+          queues[i].load(nonLeftRecursiveResults);
         }
 
         for (ref<Matchable<TResult>> rule : m_rules) {
@@ -271,12 +277,12 @@ class Fragment {
                 for (int i = 0; i <= current; i++) {
                   leftRecursiveRules[i]->consume(input, queues[i]);
 
-                  /*if (inner) {
-                    if (inner.length > best_consume) {
-                      result = inner;
-                      best_consume = inner.length;
+                  for (Piece<TResult> sub : own) {
+                    if (sub.length > best_consume) {
+                      result = sub;
+                      best_consume = sub.length;
                     }
-                  }*/
+                  }
                 }
               } while (initialResultLength < leftRecursiveRules.size());
             }

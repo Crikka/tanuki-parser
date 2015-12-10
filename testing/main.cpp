@@ -22,24 +22,26 @@ void testGrammarWithOperator();
 void testGrammarWeight();
 
 int main(int argc, char* argv[]) {
-  tanuki_run("Ref", testRef);
+  /*tanuki_run("Ref", testRef);
   tanuki_run("Lexer", testLexer);
   tanuki_run("Grammar", testGrammar);
 
-  tanuki_summary;
+  tanuki_summary;*/
 
-  /*use_tanuki;
+  use_tanuki;
 
   ref<Fragment<int>> type = fragment<int>();
 
   type->handle([](auto) -> ref<int> { return 0_ref; }, constant("int"));
   type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('%'));
-  type->handle([](auto) -> ref<int> { return 0_ref; }, type);*/
+  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('!'));
+  //type->handle([](auto) -> ref<int> { return 0_ref; }, type);
 
-  /*tanuki_match_expect(true, type->match("int"), "T1");
+  tanuki_match_expect(true, type->match("int"), "T1");
   tanuki_match_expect(true, type->match("int%"), "T2");
-  tanuki_match_expect(true, type->match("int%%"), "T3");*/
-  //tanuki_match_expect(true, type->match("int%%%"), "T4");
+  tanuki_match_expect(true, type->match("int%%"), "T3");
+  tanuki_match_expect(true, type->match("int%%!"), "T4");
+  tanuki_match_expect(true, type->match("int%%%!"), "T5");
 }
 
 void testRef() {

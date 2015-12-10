@@ -386,7 +386,7 @@ class Yielder {
   Yielder() : m_data(new TContainer()), m_current(0) {}
 
   void reset() { m_current = 0; }
-  void load(ref<TContainer> data) { this->m_data = data; }
+  void load(const ref<TContainer> &data) { this->m_data = data; }
 
   YielderIterator begin() { return {m_data->begin() + m_current, &m_current}; }
   YielderIterator end() { return {m_data->end(), nullptr}; }

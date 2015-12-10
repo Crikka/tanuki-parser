@@ -105,9 +105,9 @@ class Rule : public Matchable<TResult> {
         result = Piece<TResult>{initialSize - in.size(),
                                 rule->m_callbackByExpansion(rest...)};
       } else if (rule->m_callbackByTuple) {
-        result = Piece<TResult>{
-            initialSize - in.size(),
-            rule->m_callbackByTuple(std::make_tuple(rest...))};
+        result =
+            Piece<TResult>{initialSize - in.size(),
+                           rule->m_callbackByTuple(std::make_tuple(rest...))};
       } else {
         throw NoExecuteDefinition();
       }
@@ -128,7 +128,7 @@ class Rule : public Matchable<TResult> {
                                             Yielder<Piece<TResult>>* results,
                                             TConsumeRef, TConsumeRefs... refs) {
     StaticResolverLeftRecursive<
-        std::is_same<typename TConsumeRef::TDeepType, TResult>::value,
+        std::is_same<typename TConsumeRef::TDeepType::TValue, TResult>::value,
         TConsumeRefs...>::resolve(rule, in, results, refs...);
   }
 
@@ -144,9 +144,9 @@ class Rule : public Matchable<TResult> {
       do {
         subs.clear();
         for (Piece<TResult> result : *results) {
-          rule->left_result = &result;
           Piece<TResult> sub =
-              rule->resolve(in, in.size(), refs..., nullptr, result.result);
+              rule->resolve(in.substr(result.length), in.size(), refs...,
+                            nullptr, result.result);
 
           if (sub) {
             subs.push_back(sub);
@@ -165,7 +165,8 @@ class Rule : public Matchable<TResult> {
   struct StaticResolverLeftRecursive<false, TConsumeRefs...> {
     static void resolve(Rule<TResult, TRefs...>* rule, const tanuki::String& in,
                         Yielder<Piece<TResult>>* results,
-                        TConsumeRefs... refs) { /* Resolve compilation */}
+                        TConsumeRefs... refs) { /* Resolve compilation */
+    }
   };
 
   template <typename TRef, typename... TRestRef>
