@@ -353,15 +353,6 @@ struct Optional {
   TToken token;
 };
 
-template <typename TReturn>
-struct ConsumeRequest {
-  ConsumeRequest(String in) : in(in) {}
-
-  virtual Piece<TReturn> next() = 0;
-
-  String in;
-};
-
 template <typename T>
 class Yielder {
  private:

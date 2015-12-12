@@ -19,29 +19,14 @@ void testGrammarSimple();
 void testGrammarMultiple();
 void testGrammarFunny();
 void testGrammarWithOperator();
-void testGrammarWeight();
+void testGrammarLeftRecursive();
 
 int main(int argc, char* argv[]) {
-  /*tanuki_run("Ref", testRef);
+  tanuki_run("Ref", testRef);
   tanuki_run("Lexer", testLexer);
   tanuki_run("Grammar", testGrammar);
 
-  tanuki_summary;*/
-
-  use_tanuki;
-
-  ref<Fragment<int>> type = fragment<int>();
-
-  type->handle([](auto) -> ref<int> { return 0_ref; }, constant("int"));
-  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('%'));
-  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('!'));
-  //type->handle([](auto) -> ref<int> { return 0_ref; }, type);
-
-  tanuki_match_expect(true, type->match("int"), "T1");
-  tanuki_match_expect(true, type->match("int%"), "T2");
-  tanuki_match_expect(true, type->match("int%%"), "T3");
-  tanuki_match_expect(true, type->match("int%%!"), "T4");
-  tanuki_match_expect(true, type->match("int%%%!"), "T5");
+  tanuki_summary;
 }
 
 void testRef() {
@@ -266,7 +251,7 @@ void testGrammar() {
   tanuki_run("Multiple", testGrammarMultiple);
   tanuki_run("Funny", testGrammarFunny);
   tanuki_run("Grammer with operator", testGrammarWithOperator);
-  tanuki_run("Grammer with weight", testGrammarWeight);
+  tanuki_run("Grammar with left recursive", testGrammarLeftRecursive);
 }
 
 void testGrammarSelect() {
@@ -349,7 +334,6 @@ void testGrammarMultiple() {
   mainFragment->handle(
       [](ref<int> i, ref<char>, ref<std::string> word) { return word; }, sub,
       space(), word(letter()));
-
   mainFragment->handle([](ref<std::string> word) { return word; },
                        word(letter()));
 
@@ -450,7 +434,7 @@ void testGrammarFunny() {
 
   mainFragment->skip(space());
 
-  tanuki_result_expect(10, mainFragment->match("((( ( 5 + 5 )) ) ) "),
+  tanuki_result_expect(10, mainFragment->match("((( ( 5 + 5 )) ) )"),
                        "Add lot of parenthesis with blank");
 }
 
@@ -472,48 +456,19 @@ void testGrammarWithOperator() {
                        "Lot of incr");
 }
 
-void testGrammarWeight() {
+void testGrammarLeftRecursive() {
   use_tanuki;
 
-  ref<Fragment<int>> fragment1 = fragment<int>();
-  master(fragment1);
+  ref<Fragment<int>> type = fragment<int>();
 
-  fragment1->handle([](ref<char>) -> ref<int> { return 1_ref; }, constant(';'));
-  fragment1->handle([](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
-  fragment1->handle([](ref<char>) -> ref<int> { return 10_ref; },
-                    constant(';'));
+  type->handle([](auto) -> ref<int> { return 0_ref; }, constant("int"));
+  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('%'));
+  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('!'));
+  // type->handle([](auto) -> ref<int> { return 0_ref; }, type); Assert at runtime
 
-  ref<Fragment<int>> fragment2 = fragment<int>();
-  master(fragment2);
-
-  fragment2->handle(1, [](ref<char>) -> ref<int> { return 1_ref; },
-                    constant(';'));
-  fragment2->handle(10, [](ref<char>) -> ref<int> { return 5_ref; },
-                    constant(';'));
-  fragment2->handle(5, [](ref<char>) -> ref<int> { return 10_ref; },
-                    constant(';'));
-
-  ref<Fragment<int>> fragment3 = fragment<int>();
-  master(fragment3);
-
-  fragment3->handle(1, [](ref<char>) -> ref<int> { return 1_ref; },
-                    constant(';'));
-  fragment3->handle(10, [](ref<char>) -> ref<int> { return 5_ref; },
-                    constant(';'));
-  fragment3->handle(10, [](ref<char>) -> ref<int> { return 10_ref; },
-                    constant(';'));
-
-  ref<Fragment<int>> fragment4 = fragment<int>();
-  master(fragment4);
-
-  fragment4->handle(10, [](ref<char>) -> ref<int> { return 1_ref; },
-                    constant(';'));
-  fragment4->handle([](ref<char>) -> ref<int> { return 5_ref; }, constant(';'));
-  fragment4->handle(5, [](ref<char>) -> ref<int> { return 10_ref; },
-                    constant(';'));
-
-  tanuki_result_expect(1, fragment1->match(";"), "Classic behavior");
-  tanuki_result_expect(5, fragment2->match(";"), "Biggest Weight");
-  tanuki_result_expect(5, fragment2->match(";"), "Biggest Weight x2");
-  tanuki_result_expect(5, fragment2->match(";"), "No Weight");
+  tanuki_match_expect(true, type->match("int"), "Left Recursive without recursive");
+  tanuki_match_expect(true, type->match("int%"), "Left Recursive with one recursive");
+  tanuki_match_expect(true, type->match("int%%"), "Left Recursive with two recursive");
+  tanuki_match_expect(true, type->match("int%%!"), "Left Recursive melt");
+  tanuki_match_expect(true, type->match("int%!%%"), "Left Recursive melt of the death");
 }

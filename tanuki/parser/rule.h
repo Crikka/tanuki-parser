@@ -19,7 +19,6 @@ class Matchable {
   virtual void consume(const tanuki::String&,
                        Yielder<Piece<TResult>>& results) = 0;
 
-  short weight;
   bool isLeftRecursive;
 };
 
@@ -163,9 +162,9 @@ class Rule : public Matchable<TResult> {
 
   template <typename... TConsumeRefs>
   struct StaticResolverLeftRecursive<false, TConsumeRefs...> {
-    static void resolve(Rule<TResult, TRefs...>* rule, const tanuki::String& in,
-                        Yielder<Piece<TResult>>* results,
-                        TConsumeRefs... refs) { /* Resolve compilation */
+    static void resolve(Rule<TResult, TRefs...>*, const tanuki::String&,
+                        Yielder<Piece<TResult>>*,
+                        TConsumeRefs...) { /* Resolve compilation */
     }
   };
 

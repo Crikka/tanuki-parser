@@ -69,29 +69,6 @@ class Token {
   virtual int exactSize() { return -1; }
   virtual int biggestSize() { return -1; }
 
-  ref<ConsumeRequest<TReturn>> request(const tanuki::String &in) {
-    struct TokenConsumeRequest : public ConsumeRequest<TReturn> {
-      TokenConsumeRequest(tanuki::String in, Token<TReturn> *self)
-          : ConsumeRequest<TReturn>(in), self(self), consumed(false) {}
-
-      Piece<TReturn> next() override {
-        Piece<TReturn> result;
-
-        if (!consumed) {
-          result = self->consume(this->in);
-          consumed = true;
-        }
-
-        return result;
-      }
-
-      Token<TReturn> *self;
-      bool consumed;
-    };
-
-    return ref<ConsumeRequest<TReturn>>(new TokenConsumeRequest(in, this));
-  }
-
   typedef TReturn TReturnType;
 };
 

@@ -94,14 +94,7 @@ class Fragment {
   }
 
   template <typename... TRefs>
-  void handle(std::function<ref<TResult>(
-                  std::tuple<typename TRefs::TDeepType...>)> callback,
-              TRefs... refs) {
-    handle<TRefs...>(-1, callback, refs...);
-  }
-
-  template <typename... TRefs>
-  void handle(short weight,
+  void handle(
               std::function<ref<TResult>(
                   std::tuple<typename TRefs::TDeepType...>)> callback,
               TRefs... refs) {
@@ -119,24 +112,16 @@ class Fragment {
     }
 
     m_rules.push_back(ref<Matchable<TResult>>(rule));
-    rule->weight = weight;
   }
 
   template <typename... TRefs>
   void handle(
-      std::function<ref<TResult>(typename TRefs::TDeepType...)> callback,
-      TRefs... refs) {
-    handle<TRefs...>(-1, callback, refs...);
-  }
-
-  template <typename... TRefs>
-  void handle(
-      short weight,
       std::function<ref<TResult>(typename TRefs::TDeepType...)> callback,
       TRefs... refs) {
     Rule<TResult, TRefs...>* rule =
         new Rule<TResult, TRefs...>(this, refs..., callback);
     rule->isLeftRecursive = isLeftRecursive<TRefs...>(refs...);
+
     if (rule->isLeftRecursive) {
       if (sizeof...(TRefs) == 1) {
         assert(false && "You try to create a rule : S -> S");
@@ -148,7 +133,6 @@ class Fragment {
     }
 
     m_rules.push_back(ref<Matchable<TResult>>(rule));
-    rule->weight = weight;
   }
 
   template <typename TRef, typename... TRefs>
@@ -195,7 +179,7 @@ class Fragment {
               int initialResultLength;
 
               do {
-                initialResultLength = leftRecursiveRules.size();
+                initialResultLength = own.size();
 
                 for (int i = 0; i <= current; i++) {
                   leftRecursiveRules[i]->consume(input, queues[i]);
@@ -207,7 +191,7 @@ class Fragment {
                     }
                   }
                 }
-              } while (initialResultLength < leftRecursiveRules.size());
+              } while (initialResultLength < own.size());
             }
           } catch (NoExecuteDefinition&) {
             throw;
@@ -239,7 +223,7 @@ class Fragment {
 
   tanuki::Piece<TResult> consume(const tanuki::String& input) {
     tanuki::Piece<TResult> result;
-    int best_consume = -1;
+    uint32_t best_consume = 0;
 
     if (m_recursiveRulesCount) {
       ref<std::vector<Piece<TResult>>> nonLeftRecursiveResults =
@@ -272,7 +256,7 @@ class Fragment {
               int initialResultLength;
 
               do {
-                initialResultLength = leftRecursiveRules.size();
+                initialResultLength = own.size();
 
                 for (int i = 0; i <= current; i++) {
                   leftRecursiveRules[i]->consume(input, queues[i]);
@@ -284,7 +268,7 @@ class Fragment {
                     }
                   }
                 }
-              } while (initialResultLength < leftRecursiveRules.size());
+              } while (initialResultLength < own.size());
             }
           } catch (NoExecuteDefinition&) {
             throw;
@@ -312,33 +296,6 @@ class Fragment {
     }
 
     return result;
-  }
-
-  ref<ConsumeRequest<TResult>> request(const tanuki::String& in) {
-    struct FragmentConsumeRequest : public ConsumeRequest<TResult> {
-      FragmentConsumeRequest(tanuki::String in, Fragment<TResult>* self)
-          : ConsumeRequest<TResult>(in), self(self), current(0) {}
-
-      Piece<TResult> next() override {
-        Piece<TResult> result;
-
-        while (current < self->m_rules.size()) {
-          result = self->m_rules[current]->consume(this->in);
-          current++;
-
-          if (result) {
-            break;
-          }
-        }
-
-        return result;
-      }
-
-      Fragment<TResult>* self;
-      unsigned int current;
-    };
-
-    return ref<ConsumeRequest<TResult>>(new FragmentConsumeRequest(in, this));
   }
 
   template <typename TToken, typename... TOther>
