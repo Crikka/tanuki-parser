@@ -18,8 +18,6 @@ class Matchable {
   virtual tanuki::Piece<TResult> consume(const tanuki::String&) = 0;
   virtual void consume(const tanuki::String&,
                        Yielder<Piece<TResult>>& results) = 0;
-
-  bool isLeftRecursive;
 };
 
 template <typename TResult, typename... TRefs>
