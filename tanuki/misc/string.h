@@ -7,6 +7,7 @@ class String {
  public:
   String();
   String(const char *data);
+  String(const std::string &other);
   String(const String &other);
   ~String();
   char operator[](int index) const;

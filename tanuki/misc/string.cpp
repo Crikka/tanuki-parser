@@ -33,6 +33,8 @@ String::String(const String& other) {
   this->m_shared->m_count++;
 }
 
+String::String(const std::string& other) : String(other.c_str()) {}
+
 String::~String() {
   m_shared->m_count--;
 

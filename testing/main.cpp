@@ -460,15 +460,38 @@ void testGrammarLeftRecursive() {
   use_tanuki;
 
   ref<Fragment<int>> type = fragment<int>();
+  ref<Fragment<int>> dual = fragment<int>();
 
   type->handle([](auto) -> ref<int> { return 0_ref; }, constant("int"));
-  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('%'));
-  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type, constant('!'));
-  // type->handle([](auto) -> ref<int> { return 0_ref; }, type); Assert at runtime
+  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type,
+               constant('%'));
+  type->handle([](auto, auto) -> ref<int> { return 0_ref; }, type,
+               constant('!'));
+  // type->handle([](auto) -> ref<int> { return 0_ref; }, type); Assert at
+  // runtime
 
-  tanuki_match_expect(true, type->match("int"), "Left Recursive without recursive");
-  tanuki_match_expect(true, type->match("int%"), "Left Recursive with one recursive");
-  tanuki_match_expect(true, type->match("int%%"), "Left Recursive with two recursive");
+  dual->handle([](auto) -> ref<int> { return 0_ref; }, constant('i'));
+  dual->handle([](auto) -> ref<int> { return 0_ref; }, dual, dual);
+
+  tanuki_match_expect(true, type->match("int"),
+                      "Left Recursive without recursive");
+  tanuki_match_expect(true, type->match("int%"),
+                      "Left Recursive with one recursive");
+  tanuki_match_expect(true, type->match("int%%"),
+                      "Left Recursive with two recursive");
   tanuki_match_expect(true, type->match("int%%!"), "Left Recursive melt");
-  tanuki_match_expect(true, type->match("int%!%%"), "Left Recursive melt of the death");
+  tanuki_match_expect(true, type->match("int%!%%"),
+                      "Left Recursive melt of the death");
+
+  tanuki_match_expect(true, dual->match("i"), "Dual : Single");
+  tanuki_match_expect(true, dual->match("ii"), "Dual : Double");
+  tanuki_match_expect(true, dual->match("iii"), "Dual : Triple");
+  tanuki_match_expect(true, dual->match("iiii"), "Dual : Quadra");
+
+  std::string in;
+  for (int i = 0; i < 1500; i++) {
+    in += 'i';
+  }
+
+  tanuki_match_expect(true, dual->match(in), "Dual : 15000");
 }
