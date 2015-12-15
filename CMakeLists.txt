@@ -1,6 +1,5 @@
 project(Tanuki C CXX)
 cmake_minimum_required(VERSION 2.8)
-include_directories(tanuki/vendor/utf8-cpp)
 
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}")
 
@@ -39,5 +38,9 @@ SET_TARGET_PROPERTIES(TanukiTests PROPERTIES LINKER_LANGUAGE CXX)
 
 add_library(tanuki SHARED ${SOURCES})
 SET_TARGET_PROPERTIES(tanuki PROPERTIES LINKER_LANGUAGE CXX)
+
+install(TARGETS tanuki DESTINATION lib)
+install(DIRECTORY tanuki DESTINATION include
+        FILES_MATCHING PATTERN "*.h")
 
 target_link_libraries(TanukiTests tanuki)
