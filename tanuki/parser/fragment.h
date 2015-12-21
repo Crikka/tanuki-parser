@@ -44,7 +44,7 @@ class Fragment {
   int exactSize() { return -1; }
   int biggestSize() { return -1; }
 
-  Fragment() : m_skipped(false) {}
+  Fragment() : skipAtEnd(false) {}
   virtual ~Fragment() = default;
 
   template <typename TRef>
