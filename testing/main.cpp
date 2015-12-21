@@ -319,6 +319,13 @@ void testGrammarSimple() {
                        "Simple mult mix hard");
   tanuki_result_expect(1, mainFragment->match("5   ()##   /5"),
                        "Simple divide multispace hard");
+  tanuki_match_expect(false, mainFragment->match("5   ()##   /5   "),
+                      "Simple divide multispace hard with comment at end");
+
+  mainFragment->skipAtEnd = true;
+  tanuki_result_expect(
+      1, mainFragment->match("5   ()##   /5   "),
+      "Simple divide multispace hard with comment at end & skip at end");
 }
 
 void testGrammarMultiple() {

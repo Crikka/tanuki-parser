@@ -44,6 +44,7 @@ class Fragment {
   int exactSize() { return -1; }
   int biggestSize() { return -1; }
 
+  Fragment() : m_skipped(false) {}
   virtual ~Fragment() = default;
 
   template <typename TRef>
@@ -178,8 +179,7 @@ class Fragment {
   }
 
   tanuki::Piece<TResult> consume(const tanuki::String& input) {
-    tanuki::Piece<TResult> result;
-    uint32_t best_consume = 0;
+    tanuki::Piece<TResult> result{0, ref<TResult>()};
 
     ref<std::vector<Piece<TResult>>> nonLeftRecursiveResults(
         new std::vector<Piece<TResult>>);
@@ -196,9 +196,8 @@ class Fragment {
     own.load(nonLeftRecursiveResults);
 
     for (Piece<TResult> sub : own) {
-      if (sub.length > best_consume) {
+      if (result.length < sub.length) {
         result = sub;
-        best_consume = sub.length;
 
         if (sub.length == input.size()) {
           goto end;
@@ -206,7 +205,7 @@ class Fragment {
       }
     }
 
-    if (!m_lr_rules.empty() && !(bool)result) {
+    if (!m_lr_rules.empty()) {
       int leftRecursiveCount = m_lr_rules.size();
 
       Yielder<Piece<TResult>>* queues =
@@ -225,9 +224,8 @@ class Fragment {
           rule->consume(input, queues[current]);
 
           for (Piece<TResult> sub : own) {
-            if (sub.length > best_consume) {
+            if (result.length < sub.length) {
               result = sub;
-              best_consume = sub.length;
 
               if (sub.length == input.size()) {
                 goto out;
@@ -291,6 +289,8 @@ class Fragment {
 
     return res;
   }
+
+  bool skipAtEnd;
 
  private:
   std::vector<ref<Matchable<TResult>>> m_lr_rules;

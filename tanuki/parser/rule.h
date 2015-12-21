@@ -96,14 +96,26 @@ class Rule : public Matchable<TResult> {
                                    const tanuki::String& in,
                                    uint32_t initialSize, std::nullptr_t,
                                    TRestRef... rest) {
+      tanuki::String skippedIn = in;
+
+      if (rule->m_context->skipAtEnd) {
+        uint32_t toSkip = rule->m_context->shouldSkip(skippedIn);
+
+        while (toSkip > 0) {
+          skippedIn = skippedIn.substr(toSkip);
+
+          toSkip = rule->m_context->shouldSkip(skippedIn);
+        }
+      }
+
       Piece<TResult> result;
 
       if (rule->m_callbackByExpansion) {
-        result = Piece<TResult>{initialSize - in.size(),
+        result = Piece<TResult>{initialSize - skippedIn.size(),
                                 rule->m_callbackByExpansion(rest...)};
       } else if (rule->m_callbackByTuple) {
         result =
-            Piece<TResult>{initialSize - in.size(),
+            Piece<TResult>{initialSize - skippedIn.size(),
                            rule->m_callbackByTuple(std::make_tuple(rest...))};
       } else {
         throw NoExecuteDefinition();

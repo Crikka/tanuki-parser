@@ -69,7 +69,7 @@ String String::substr(int from, int length) const {
 
 int String::size() const { return m_length; }
 
-bool String::empty() const { return m_length == 0; }
+bool String::empty() const { return m_length <= 0; }
 
 std::string String::toStdString() const {
   char data[m_length + 1];
