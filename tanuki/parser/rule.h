@@ -27,8 +27,7 @@ class Rule : public Matchable<TResult> {
        std::function<ref<TResult>(typename TRefs::TDeepType...)> callback)
       : Matchable<TResult>(),
         m_context(context),
-        m_refs(this, tanuki::String(), refs...),
-        m_refs_with_left_result(this, tanuki::String(), nullptr, refs...),
+        m_refs(refs...),
         m_callbackByExpansion(callback) {}
 
   Rule(Fragment<TResult>* context, TRefs... refs,
@@ -36,31 +35,26 @@ class Rule : public Matchable<TResult> {
            callback)
       : Matchable<TResult>(),
         m_context(context),
-        m_refs(this, tanuki::String(), refs...),
-        m_refs_with_left_result(this, tanuki::String(), nullptr, refs...),
+        m_refs(refs...),
         m_callbackByTuple(callback) {}
 
   tanuki::Piece<TResult> consume(const tanuki::String& in) override {
-    std::get<1>(m_refs) = in;
-
-    return tanuki::apply(static_resolve, m_refs);
+    return resolve<sizeof...(TRefs)>(in, in.size());
   }
 
-  void consume(const tanuki::String& in,
-               Yielder<Piece<TResult>>& results) override {
-    std::get<1>(m_refs_with_left_result) = in;
-    std::get<2>(m_refs_with_left_result) = &results;
-
-    tanuki::apply(static_resolve_left_recursive<TRefs...>,
-                  m_refs_with_left_result);
+  template <size_t N, typename... TRefsResults>
+  Piece<TResult> resolve(const tanuki::String& in, uint32_t initialSize,
+                         TRefsResults... results) {
+    return Resolver<N, TRefsResults...>::callback(this, in, initialSize,
+                                                  results...);
   }
 
-  template <typename TRef, typename... TRestRef>
+  template <size_t N, typename... TRefsResults>
   struct Resolver {
     static tanuki::Piece<TResult> callback(Rule<TResult, TRefs...>* rule,
                                            const tanuki::String& in,
-                                           uint32_t initialSize, TRef ref,
-                                           TRestRef... rest) {
+                                           uint32_t initialSize,
+                                           TRefsResults... results) {
       tanuki::Piece<TResult> result{0, tanuki::ref<TResult>()};
 
       tanuki::String skippedIn = in;
@@ -73,13 +67,14 @@ class Rule : public Matchable<TResult> {
         toSkip = rule->m_context->shouldSkip(skippedIn);
       }
 
-      auto consumed = ref->consume(skippedIn);
+      auto consumed =
+          std::get<sizeof...(TRefsResults)>(rule->m_refs)->consume(skippedIn);
 
       if (consumed) {
         try {
-          result = rule->resolve<TRestRef..., typename TRef::TDeepType>(
-              skippedIn.substr(consumed.length), initialSize, rest...,
-              consumed.result);
+          result =
+              rule->resolve<N - 1>(skippedIn.substr(consumed.length),
+                                   initialSize, results..., consumed.result);
 
         } catch (NoExecuteDefinition&) {
           throw;
@@ -90,12 +85,12 @@ class Rule : public Matchable<TResult> {
     }
   };
 
-  template <typename... TRestRef>
-  struct Resolver<std::nullptr_t, TRestRef...> {
-    static Piece<TResult> callback(Rule<TResult, TRefs...>* rule,
-                                   const tanuki::String& in,
-                                   uint32_t initialSize, std::nullptr_t,
-                                   TRestRef... rest) {
+  template <typename... TRefsResults>
+  struct Resolver<0, TRefsResults...> {
+    static tanuki::Piece<TResult> callback(Rule<TResult, TRefs...>* rule,
+                                           const tanuki::String& in,
+                                           uint32_t initialSize,
+                                           TRefsResults... results) {
       tanuki::String skippedIn = in;
 
       if (rule->m_context->skipAtEnd) {
@@ -112,11 +107,11 @@ class Rule : public Matchable<TResult> {
 
       if (rule->m_callbackByExpansion) {
         result = Piece<TResult>{initialSize - skippedIn.size(),
-                                rule->m_callbackByExpansion(rest...)};
+                                rule->m_callbackByExpansion(results...)};
       } else if (rule->m_callbackByTuple) {
-        result =
-            Piece<TResult>{initialSize - skippedIn.size(),
-                           rule->m_callbackByTuple(std::make_tuple(rest...))};
+        result = Piece<TResult>{
+            initialSize - skippedIn.size(),
+            rule->m_callbackByTuple(std::make_tuple(results...))};
       } else {
         throw NoExecuteDefinition();
       }
@@ -125,21 +120,22 @@ class Rule : public Matchable<TResult> {
     }
   };
 
-  static tanuki::Piece<TResult> static_resolve(Rule<TResult, TRefs...>* rule,
-                                               const tanuki::String& in,
-                                               TRefs... refs) {
-    return rule->resolve(in, in.size(), refs..., nullptr);
+  void consume(const tanuki::String& in,
+               Yielder<Piece<TResult>>& results) override {
+    StaticResolverLeftRecursive<HasFirstRef<TRefs...>::result::value>::resolve(
+        this, in, &results);
   }
 
-  template <typename TConsumeRef, typename... TConsumeRefs>
-  static void static_resolve_left_recursive(Rule<TResult, TRefs...>* rule,
-                                            const tanuki::String& in,
-                                            Yielder<Piece<TResult>>* results,
-                                            TConsumeRef, TConsumeRefs... refs) {
-    StaticResolverLeftRecursive<
-        std::is_same<typename TConsumeRef::TDeepType::TValue, TResult>::value,
-        TConsumeRefs...>::resolve(rule, in, results, refs...);
-  }
+  template <typename TFirst, typename...>
+  struct HasFirstRef {
+    typedef typename std::is_same<typename TFirst::TDeepType::TValue,
+                                  TResult>::type result;
+  };
+
+  template <typename TFirst, typename...>
+  struct FirstRef {
+    typedef typename TFirst::TDeepType result;
+  };
 
   template <bool, typename... TConsumeRefs>
   struct StaticResolverLeftRecursive {};
@@ -147,19 +143,18 @@ class Rule : public Matchable<TResult> {
   template <typename... TConsumeRefs>
   struct StaticResolverLeftRecursive<true, TConsumeRefs...> {
     static void resolve(Rule<TResult, TRefs...>* rule, const tanuki::String& in,
-                        Yielder<Piece<TResult>>* results,
-                        TConsumeRefs... refs) {
+                        Yielder<Piece<TResult>>* results) {
       std::vector<Piece<TResult>> subs;
+
       do {
         subs.clear();
         for (Piece<TResult> result : *results) {
-          Piece<TResult> sub =
-              rule->resolve(in.substr(result.length), in.size(), refs...,
-                            nullptr, result.result);
+          /*Piece<TResult> sub = rule->resolve<sizeof...(TRefs)-1>(
+              in.substr(result.length), in.size(), result.result);
 
           if (sub) {
             subs.push_back(sub);
-          }
+          }*/
         }
 
         for (Piece<TResult> sub : subs) {
@@ -178,20 +173,11 @@ class Rule : public Matchable<TResult> {
     }
   };
 
-  template <typename TRef, typename... TRestRef>
-  Piece<TResult> resolve(const tanuki::String& in, uint32_t initialSize,
-                         TRef ref, TRestRef... rest) {
-    return Resolver<TRef, TRestRef...>::callback(this, in, initialSize, ref,
-                                                 rest...);
-  }
-
   std::function<ref<TResult>(typename TRefs::TDeepType...)>
       m_callbackByExpansion;
   std::function<ref<TResult>(std::tuple<typename TRefs::TDeepType...>)>
       m_callbackByTuple;
-  std::tuple<Rule<TResult, TRefs...>*, tanuki::String, TRefs...> m_refs;
-  std::tuple<Rule<TResult, TRefs...>*, tanuki::String, Yielder<Piece<TResult>>*,
-             TRefs...> m_refs_with_left_result;
+  std::tuple<TRefs...> m_refs;
   Fragment<TResult>* m_context;
 };
 }

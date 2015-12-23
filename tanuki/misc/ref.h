@@ -340,10 +340,12 @@ void master(ref<T> &ref) {
 
 template <typename TReturn>
 struct Piece {
+  typedef ref<TReturn> TResult;
+
   operator bool() { return ((bool)result); }
 
   uint32_t length;
-  ref<TReturn> result;
+  TResult result;
 };
 
 template <typename TToken>
