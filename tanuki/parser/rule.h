@@ -39,14 +39,7 @@ class Rule : public Matchable<TResult> {
         m_callbackByTuple(callback) {}
 
   tanuki::Piece<TResult> consume(const tanuki::String& in) override {
-    return resolve<sizeof...(TRefs)>(in, in.size());
-  }
-
-  template <size_t N, typename... TRefsResults>
-  Piece<TResult> resolve(const tanuki::String& in, uint32_t initialSize,
-                         TRefsResults... results) {
-    return Resolver<N, TRefsResults...>::callback(this, in, initialSize,
-                                                  results...);
+    return Resolver<sizeof...(TRefs)>::callback(this, in, in.size());
   }
 
   template <size_t N, typename... TRefsResults>
@@ -55,6 +48,8 @@ class Rule : public Matchable<TResult> {
                                            const tanuki::String& in,
                                            uint32_t initialSize,
                                            TRefsResults... results) {
+      constexpr size_t current_ref = sizeof...(TRefsResults);
+
       tanuki::Piece<TResult> result{0, tanuki::ref<TResult>()};
 
       tanuki::String skippedIn = in;
@@ -67,14 +62,17 @@ class Rule : public Matchable<TResult> {
         toSkip = rule->m_context->shouldSkip(skippedIn);
       }
 
-      auto consumed =
-          std::get<sizeof...(TRefsResults)>(rule->m_refs)->consume(skippedIn);
+      auto consumed = std::get<current_ref>(rule->m_refs)->consume(skippedIn);
 
       if (consumed) {
         try {
-          result =
-              rule->resolve<N - 1>(skippedIn.substr(consumed.length),
-                                   initialSize, results..., consumed.result);
+          typedef std::tuple<TRefs...> TupleRefs;
+          typedef typename std::tuple_element<current_ref,
+                                              TupleRefs>::type::TDeepType NType;
+
+          result = Resolver<N - 1, TRefsResults..., NType>::callback(
+              rule, skippedIn.substr(consumed.length), initialSize, results...,
+              consumed.result);
 
         } catch (NoExecuteDefinition&) {
           throw;
@@ -122,7 +120,7 @@ class Rule : public Matchable<TResult> {
 
   void consume(const tanuki::String& in,
                Yielder<Piece<TResult>>& results) override {
-    StaticResolverLeftRecursive<HasFirstRef<TRefs...>::result::value>::resolve(
+    ResolverLeftRecursive<HasFirstRef<TRefs...>::result::value>::resolve(
         this, in, &results);
   }
 
@@ -132,29 +130,28 @@ class Rule : public Matchable<TResult> {
                                   TResult>::type result;
   };
 
-  template <typename TFirst, typename...>
-  struct FirstRef {
-    typedef typename TFirst::TDeepType result;
-  };
-
   template <bool, typename... TConsumeRefs>
-  struct StaticResolverLeftRecursive {};
+  struct ResolverLeftRecursive {};
 
   template <typename... TConsumeRefs>
-  struct StaticResolverLeftRecursive<true, TConsumeRefs...> {
+  struct ResolverLeftRecursive<true, TConsumeRefs...> {
     static void resolve(Rule<TResult, TRefs...>* rule, const tanuki::String& in,
                         Yielder<Piece<TResult>>* results) {
+      typedef std::tuple<TRefs...> TupleRefs;
+      typedef typename std::tuple_element<0, TupleRefs>::type::TDeepType NType;
+      constexpr size_t length = sizeof...(TRefs)-1;
+
       std::vector<Piece<TResult>> subs;
 
       do {
         subs.clear();
         for (Piece<TResult> result : *results) {
-          /*Piece<TResult> sub = rule->resolve<sizeof...(TRefs)-1>(
-              in.substr(result.length), in.size(), result.result);
+          Piece<TResult> sub = Resolver<length, NType>::callback(
+              rule, in.substr(result.length), in.size(), result.result);
 
           if (sub) {
             subs.push_back(sub);
-          }*/
+          }
         }
 
         for (Piece<TResult> sub : subs) {
@@ -166,7 +163,7 @@ class Rule : public Matchable<TResult> {
   };
 
   template <typename... TConsumeRefs>
-  struct StaticResolverLeftRecursive<false, TConsumeRefs...> {
+  struct ResolverLeftRecursive<false, TConsumeRefs...> {
     static void resolve(Rule<TResult, TRefs...>*, const tanuki::String&,
                         Yielder<Piece<TResult>>*,
                         TConsumeRefs...) { /* Resolve compilation */
