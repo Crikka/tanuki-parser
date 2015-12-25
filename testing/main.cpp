@@ -500,5 +500,5 @@ void testGrammarLeftRecursive() {
     in += 'i';
   }
 
-  tanuki_match_expect(true, dual->match(in), "Dual : 15000");
+  tanuki_match_expect(true, dual->match(in), "Dual : 1500");
 }
