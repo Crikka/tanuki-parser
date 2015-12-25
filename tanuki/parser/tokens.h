@@ -64,8 +64,6 @@ class Token {
  public:
   virtual ref<TReturn> match(const tanuki::String &in) = 0;
   virtual Piece<TReturn> consume(const tanuki::String &in) = 0;
-  virtual bool greedy() { return true; }
-  virtual bool stopAtlengthGreedyFail() { return true; }
   virtual int exactSize() { return -1; }
   virtual int biggestSize() { return -1; }
 
@@ -80,7 +78,6 @@ class ConstantToken : public Token<std::string> {
   explicit ConstantToken(const std::string &constant);
   ref<std::string> match(const tanuki::String &in) override;
   Piece<std::string> consume(const tanuki::String &in) override;
-  bool greedy() override { return false; }
   int exactSize() override { return m_constant.size(); }
 
  private:
@@ -95,7 +92,6 @@ class CharToken : public Token<char> {
   explicit CharToken(char character);
   ref<char> match(const tanuki::String &in) override;
   Piece<char> consume(const tanuki::String &in) override;
-  bool greedy() override { return false; }
   int exactSize() override { return 1; }
 
  private:
@@ -179,7 +175,6 @@ class PlusToken
       const tanuki::String &in) override;
   Piece<std::vector<ref<typename TToken::TReturnType>>> consume(
       const tanuki::String &in) override;
-  bool stopAtlengthGreedyFail() override { return false; }
 };
 
 /**
@@ -197,7 +192,6 @@ class StarToken
       const tanuki::String &in) override;
   Piece<Optional<ref<std::vector<ref<typename TToken::TReturnType>>>>> consume(
       const tanuki::String &in) override;
-  bool stopAtlengthGreedyFail() override { return false; }
 
  private:
   ref<OptionalToken<PlusToken<TToken>>> m_inner;

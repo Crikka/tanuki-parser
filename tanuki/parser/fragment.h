@@ -39,8 +39,6 @@ class Fragment {
  public:
   typedef TResult TReturnType;
 
-  virtual bool greedy() { return true; }
-  virtual bool stopAtlengthGreedyFail() { return true; }
   int exactSize() { return -1; }
   int biggestSize() { return -1; }
 
