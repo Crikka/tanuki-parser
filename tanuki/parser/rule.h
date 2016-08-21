@@ -9,10 +9,13 @@
 namespace tanuki {
 template <typename TResult>
 class Fragment;
+template <typename TResult, typename... TRefs>
+class Rule;
 
 template <bool, typename TResult, typename... TRefs>
 struct ResolverLeftRecursive {
-  static void resolve(...) {}
+  static void resolve(Rule<TResult, TRefs...>*, const tanuki::String&,
+                      Yielder<Piece<TResult>>*) {}
 };
 
 template <size_t N, typename TResult, typename... TRefs>

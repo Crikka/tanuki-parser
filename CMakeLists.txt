@@ -1,8 +1,4 @@
 project(Tanuki C CXX)
-cmake_minimum_required(VERSION 2.8)
-
-set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}")
-
 
 set(TESTS_SOURCES
     testing/main.cpp
@@ -34,10 +30,16 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 add_executable(TanukiTests ${TESTS_SOURCES})
-SET_TARGET_PROPERTIES(TanukiTests PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(TanukiTests PROPERTIES
+    LINKER_LANGUAGE CXX
+    CXX_STANDARD 14
+)
 
 add_library(tanuki SHARED ${SOURCES})
-SET_TARGET_PROPERTIES(tanuki PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(tanuki PROPERTIES
+    LINKER_LANGUAGE CXX
+    CXX_STANDARD 14
+)
 
 install(TARGETS tanuki DESTINATION lib)
 install(DIRECTORY tanuki DESTINATION include
